@@ -6,6 +6,7 @@ add_executable(vault_tests
 target_link_libraries(vault_tests
     PRIVATE
         doctest::doctest
+        vault_lib
 )
 
 target_include_directories(vault_tests
