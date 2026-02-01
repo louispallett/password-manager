@@ -17,7 +17,9 @@ class SecureString {
         SecureString& operator=(const SecureString&) = delete;
 
         SecureString(SecureString&&) noexcept;
-        SecureString& operator-(SecureString&&) noexcept;
+        SecureString& operator=(SecureString&&) noexcept;
+
+        ~SecureString();
 
         // Access as bytes (KDF input)
         const std::uint8_t* data() const noexcept;

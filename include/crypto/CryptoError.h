@@ -8,6 +8,7 @@ enum class CryptoError {
     KeyDerivationFailed,
     EncryptionFailed,
     DecryptionFailed,
-    AuthenticationFailed
+    AuthenticationFailed,
+    CryptoInitFailed
 };
 }

@@ -107,4 +107,5 @@ template <typename E>
     private:
         bool has_value_;
         E error_;
+};
 }
