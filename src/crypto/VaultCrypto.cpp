@@ -1,5 +1,6 @@
 #include "crypto/VaultCrypto.h"
 #include <sodium.h>
+#include <sodium/crypto_aead_xchacha20poly1305.h>
 
 namespace crypto 
 {
@@ -44,4 +45,52 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key(
     
     return derived_key;
 }
+
+util::Expected<ByteBuffer, CryptoError> encrypt (
+    const ByteBuffer& key,
+    const ByteBuffer& plaintext,
+)
+{
+    if (key.size() != crypto_aead_xchacha20poly1305_ietf_KEYBYTES)
+    {
+        return CryptoError::InvalidKey;
+    }
+
+    ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    randombytes_buf(nonce.data(), nonce.size());
+
+    ByteBuffer output(
+        nonce.size() +
+        plaintext.size() + 
+        crypto_aead_xchacha20poly1305_ietf_ABYTES
+    );
+
+    std::memcpy(output.data(), nonce.data(), nonce.size());
+
+    unsigned long long ciphertext_len = 0;
+
+    int rc = crypto_aead_xchacha20poly1305_ietf_encrypt(
+        output.data() + nonce.size(), // output buffer
+        &ciphertext_len,         // output size counter
+        plaintext.data(),             // plaintext to encrypt
+        plaintext.size(),          // plaintext size
+        nullptr,                     // additional authenticated data (not using)
+        0,                        // additional authenticated data length
+        nullptr,                   // Secret nonce - for XChaCha20-Poly1305 this should always be NULL
+        nonce.data(),              // Our nonce
+        key.data()                    // Our key
+    );
+
+    if (rc != 0)
+    {
+        sodium_memzero(output.data(), output.size());
+        return CryptoError::EncryptionFailed;
+    }
+
+    output.resize(
+        nonce.size() + ciphertext_len
+    );
+    return output; 
+}
+
 } // namespace crypto
