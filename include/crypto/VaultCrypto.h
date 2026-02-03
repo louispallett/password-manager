@@ -21,14 +21,12 @@ class VaultCrypto {
         static util::Expected<ByteBuffer, CryptoError> encrypt (
 	        const ByteBuffer& key,
 	        const ByteBuffer& plaintext,
-	        const ByteBuffer& nonce
         );
 
          // --- Decryption ---   
         static util::Expected<ByteBuffer, CryptoError> decrypt (
 	        const ByteBuffer& key,
 	        const ByteBuffer& ciphertext,
-	        const ByteBuffer& nonce
         );
 };
 }
