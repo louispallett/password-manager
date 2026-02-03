@@ -14,7 +14,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key(
     }
 
     // Validate salt size
-    if (salt.size() != SALT_SIZE) 
+    if (salt.size() != crypto_pwhash_SALTBYTES) 
     {
         return CryptoError::InvalidSalt;
     }
@@ -22,21 +22,17 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key(
     // Prepare output buffer
     ByteBuffer derived_key(crypto::KEY_SIZE);
     
-    // Argon2id parameters (moderate security - adjust based on your needs)
-    // opslimit: number of computational operations
-    // memlimit: maximum memory usage in bytes
-    constexpr unsigned long long opslimit = crypto_pwhash_OPSLIMIT_INTERACTIVE;
-    constexpr std::size_t memlimit = crypto_pwhash_MEMLIMIT_INTERACTIVE;
-    
     // Perform key derivation
     int result = crypto_pwhash(
-        derived_key.data(),                    // output buffer
-        derived_key.size(),                    // output length
+        derived_key.data(),                   // output buffer
+        derived_key.size(),                   // output length
         reinterpret_cast<const char*>(password.data()),  // password
-        password.size(),                       // password length
+        password.size(),                      // password length
         salt.data(),                          // salt
-        opslimit,                             // computational cost
-        memlimit,                             // memory cost
+        // crypto_pwhash_OPSLIMIT_SENSITIVE,     // computational cost
+        // crypto_pwhash_MEMLIMIT_SENSITIVE,     // memory cost
+        crypto_pwhash_OPSLIMIT_MODERATE,
+        crypto_pwhash_MEMLIMIT_MODERATE,
         crypto_pwhash_ALG_ARGON2ID13          // algorithm (Argon2id v1.3)
     );
     
