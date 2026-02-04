@@ -20,13 +20,13 @@ class VaultCrypto {
         // AEAD encrypt (XChaCha20-Poly1305)
         static util::Expected<ByteBuffer, CryptoError> encrypt (
 	        const ByteBuffer& key,
-	        const ByteBuffer& plaintext,
+	        const ByteBuffer& plaintext
         );
 
          // --- Decryption ---   
         static util::Expected<ByteBuffer, CryptoError> decrypt (
 	        const ByteBuffer& key,
-	        const ByteBuffer& ciphertext,
+	        const ByteBuffer& ciphertext
         );
 };
 }

@@ -13,11 +13,6 @@ static crypto::ByteBuffer fixed_salt()
     return crypto::ByteBuffer(crypto::SALT_SIZE, 0x42);
 }
 
-static crypto::ByteBuffer fixed_nonce() 
-{
-    return crypto::ByteBuffer(crypto::NONCE_SIZE, 0x24);
-}
-
 // --- Test 1: Key derivation determinism ---
 // This tells us that derive_key exists and it returns Expected<ByteBuffer, CryptoError>
 TEST_CASE("Key derivation is deterministic for same password and salt") 
@@ -60,10 +55,6 @@ TEST_CASE("Encrypt then decrypt returns original plaintext")
 
     auto encrypted = crypto::VaultCrypto::encrypt(key.value(), plaintext);
     REQUIRE(encrypted);
-
-    // FIXME: We can remove this once we have done `decrypt` - this function should check this anyway!
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    REQUIRE(encrypted->size() > NONCE_SIZE);
 
     auto decrypted = crypto::VaultCrypto::decrypt(key.value(), encrypted.value());
     REQUIRE(decrypted);
