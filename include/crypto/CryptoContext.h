@@ -10,7 +10,7 @@ class CryptoContext
     public:
         static bool init() noexcept;
 
-        static void random_bytes(ByteBuffer& out);
+        static void random_bytes(ByteBuffer& buffer);
 
         static void secure_zero(ByteBuffer& buffer) noexcept;
 };

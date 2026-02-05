@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <algorithm>
 #include "crypto/CryptoContext.h"
 
 // --- GROUP 1: Initialisation ---
