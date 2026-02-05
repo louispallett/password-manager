@@ -6,8 +6,10 @@
 #include "util/Expected.h"
 #include "util/SecureString.h"
 
-namespace crypto {
-class VaultCrypto {
+namespace crypto 
+{
+class VaultCrypto 
+{
     public:
         // --- Key derivation ---
         // Argon2id(password, salt) -> symmetric key

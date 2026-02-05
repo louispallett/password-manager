@@ -7,7 +7,7 @@
 
 namespace crypto 
 {
-util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key(
+util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
     const util::SecureString& password,
     const ByteBuffer& salt
 ) 
