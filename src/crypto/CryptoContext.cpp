@@ -7,7 +7,7 @@ namespace crypto
 
 bool CryptoContext::init () noexcept
 {
-
+    return sodium_init() >= 0;
 }
 
 void random_bytes (ByteBuffer& out)
