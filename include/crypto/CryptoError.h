@@ -1,7 +1,9 @@
 #pragma once
 
-namespace crypto {
-enum class CryptoError {
+namespace crypto 
+{
+enum class CryptoError 
+{
     InvalidKey,
     InvalidNonce,
     InvalidSalt,
