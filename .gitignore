@@ -1,6 +1,7 @@
 # Compiled
 build/
 Testing/
+.cache/
 
 # vim
 *.swp
