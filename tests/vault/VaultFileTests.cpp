@@ -67,7 +67,7 @@ TEST_CASE("Loading with wrong password fails")
 
     REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
 
-    auto result = vault::VaultFile::load(fixture.file_path, "HelloWorld123!");
+    auto result = vault::VaultFile::load(fixture.file_path, util::SecureString("HelloWorld123!"));
     CHECK(result.error() == vault::VaultFileError::CryptoError);
 }
 
