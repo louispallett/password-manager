@@ -28,6 +28,7 @@ class VaultCrypto
          // --- Decryption ---   
         static util::Expected<ByteBuffer, CryptoError> decrypt (
 	        const ByteBuffer& key,
+            const ByteBuffer& nonce,
 	        const ByteBuffer& ciphertext
         );
 };

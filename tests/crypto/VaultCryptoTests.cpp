@@ -55,7 +55,14 @@ TEST_CASE("Encrypt then decrypt returns original plaintext")
     auto encrypted = crypto::VaultCrypto::encrypt(key.value(), plaintext);
     REQUIRE(encrypted);
 
-    auto decrypted = crypto::VaultCrypto::decrypt(key.value(), encrypted.value());
+    const auto& encrypted_vec = encrypted.value();
+    REQUIRE(!encrypted_vec.empty());
+
+    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
+    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
+    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
+
+    auto decrypted = crypto::VaultCrypto::decrypt(key.value(), nonce, cipher);
     REQUIRE(decrypted);
 
     CHECK(decrypted.value() == plaintext);
@@ -71,7 +78,14 @@ TEST_CASE("Decrypting with wrong key fails")
     auto encrypted = crypto::VaultCrypto::encrypt(correct_key, plaintext);
     REQUIRE(encrypted);
 
-    auto decrypted = crypto::VaultCrypto::decrypt(wrong_key, encrypted.value());
+    const auto& encrypted_vec = encrypted.value();
+    REQUIRE(!encrypted_vec.empty());
+
+    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
+    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
+    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
+
+    auto decrypted = crypto::VaultCrypto::decrypt(wrong_key, nonce, cipher);
     CHECK_FALSE(decrypted);
 }
 
@@ -84,11 +98,17 @@ TEST_CASE("Tampered ciphertext fails authentication")
     auto encrypted = crypto::VaultCrypto::encrypt(key, plaintext);
     REQUIRE(encrypted);
 
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    // Flip one bit in the ciphertext
-    encrypted.value()[NONCE_SIZE] ^= 0xFF;
+    const auto& encrypted_vec = encrypted.value();
+    REQUIRE(!encrypted_vec.empty());
 
-    auto decrypted = crypto::VaultCrypto::decrypt(key, encrypted.value());
+    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
+    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
+    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
+
+    // Flip one bit in the ciphertext
+    cipher[0] ^= 0xFF;
+
+    auto decrypted = crypto::VaultCrypto::decrypt(key, nonce, cipher);
 
     CHECK_FALSE(decrypted);
 }

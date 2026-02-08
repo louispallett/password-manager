@@ -1,7 +1,7 @@
 add_executable(vault_tests
     crypto/VaultCryptoTests.cpp
     crypto/CryptoContextTests.cpp
-    util/ExpectedTests.cpp
+    vault/VaultFileTests.cpp
 )
 
 target_link_libraries(vault_tests
