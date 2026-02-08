@@ -1,4 +1,5 @@
 #include "crypto/VaultCrypto.h"
+#include "crypto/CryptoTypes.h"
 #include <cstring>
 #include <sodium.h>
 #include <sodium/crypto_aead_chacha20poly1305.h>
@@ -98,6 +99,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::encrypt (
 
 util::Expected<ByteBuffer, CryptoError> VaultCrypto::decrypt (
     const ByteBuffer& key,
+    const ByteBuffer& nonce,
     const ByteBuffer& ciphertext
 )
 {
@@ -106,19 +108,15 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::decrypt (
         return CryptoError::InvalidKey;
     }
 
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
     constexpr std::size_t TAG_SIZE = crypto_aead_xchacha20poly1305_ietf_ABYTES;
 
-    if (ciphertext.size() < NONCE_SIZE + TAG_SIZE) 
+    if (ciphertext.size() < TAG_SIZE) 
     {
         return CryptoError::DecryptionFailed;
     }
 
-    ByteBuffer nonce(ciphertext.begin(), ciphertext.begin() + NONCE_SIZE);
-    ByteBuffer cipher(ciphertext.begin() + NONCE_SIZE, ciphertext.end());
-    
     ByteBuffer output(
-        cipher.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES
+        ciphertext.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES
     );
 
     unsigned long long plaintext_len = 0;
@@ -127,8 +125,8 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::decrypt (
         output.data(),
         &plaintext_len,
         nullptr,
-        cipher.data(),
-        cipher.size(),
+        ciphertext.data(),
+        ciphertext.size(),
         nullptr, 
         0,
         nonce.data(),
