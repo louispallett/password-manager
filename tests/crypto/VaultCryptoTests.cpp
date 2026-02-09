@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 
+#include "crypto/CryptoContext.h"
 #include "crypto/VaultCrypto.h"
 #include "crypto/CryptoConstants.h"
 #include "crypto/CryptoTypes.h"
@@ -52,17 +53,13 @@ TEST_CASE("Encrypt then decrypt returns original plaintext")
     auto key = crypto::VaultCrypto::derive_key(password, salt);
     REQUIRE(key);
 
-    auto encrypted = crypto::VaultCrypto::encrypt(key.value(), plaintext);
+    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::CryptoContext::random_bytes(nonce);
+
+    auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
     REQUIRE(encrypted);
 
-    const auto& encrypted_vec = encrypted.value();
-    REQUIRE(!encrypted_vec.empty());
-
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
-    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
-
-    auto decrypted = crypto::VaultCrypto::decrypt(key.value(), nonce, cipher);
+    auto decrypted = crypto::VaultCrypto::decrypt(key.value(), nonce, encrypted.value());
     REQUIRE(decrypted);
 
     CHECK(decrypted.value() == plaintext);
@@ -75,17 +72,13 @@ TEST_CASE("Decrypting with wrong key fails")
     crypto::ByteBuffer wrong_key(32, 0x02);     // different key
     crypto::ByteBuffer plaintext = {'s', 'e', 'c', 'r', 'e', 't'};
 
-    auto encrypted = crypto::VaultCrypto::encrypt(correct_key, plaintext);
+    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::CryptoContext::random_bytes(nonce);
+
+    auto encrypted = crypto::VaultCrypto::encrypt(correct_key, nonce, plaintext);
     REQUIRE(encrypted);
 
-    const auto& encrypted_vec = encrypted.value();
-    REQUIRE(!encrypted_vec.empty());
-
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
-    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
-
-    auto decrypted = crypto::VaultCrypto::decrypt(wrong_key, nonce, cipher);
+    auto decrypted = crypto::VaultCrypto::decrypt(wrong_key, nonce, encrypted.value());
     CHECK_FALSE(decrypted);
 }
 
@@ -95,20 +88,16 @@ TEST_CASE("Tampered ciphertext fails authentication")
     crypto::ByteBuffer key(32, 0x01);
     crypto::ByteBuffer plaintext = {'s', 'e', 'c', 'r', 'e', 't'};
 
-    auto encrypted = crypto::VaultCrypto::encrypt(key, plaintext);
+    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::CryptoContext::random_bytes(nonce);
+
+    auto encrypted = crypto::VaultCrypto::encrypt(key, nonce, plaintext);
     REQUIRE(encrypted);
 
-    const auto& encrypted_vec = encrypted.value();
-    REQUIRE(!encrypted_vec.empty());
-
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
-    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
-
     // Flip one bit in the ciphertext
-    cipher[0] ^= 0xFF;
+    encrypted.value()[0] ^= 0xFF;
 
-    auto decrypted = crypto::VaultCrypto::decrypt(key, nonce, cipher);
+    auto decrypted = crypto::VaultCrypto::decrypt(key, nonce, encrypted.value());
 
     CHECK_FALSE(decrypted);
 }

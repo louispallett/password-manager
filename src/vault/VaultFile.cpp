@@ -98,23 +98,18 @@ util::Expected<void, VaultFileError> vault::VaultFile::create_new (
 	    return VaultFileError::IOError;
     }
 
-    // Serialise empty entries
-    std::vector<Entry> entries;
-    crypto::ByteBuffer plain_text = serialise_entries(entries);
+    // Create nonce
+    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::CryptoContext::random_bytes(nonce);
 
-    // Encrypt blob
-    auto encrypted_blob = crypto::VaultCrypto::encrypt(key.value(), plain_text);
-    if (!encrypted_blob)
+    // // Serialise empty entries
+    Vault vault;
+    auto plaintext = vault.serialise();
+    auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
+    if (!encrypted)
     {
         return VaultFileError::CryptoError;
     }
-
-    // Extract nonce
-    const auto& encrypted_vec = encrypted_blob.value();
-
-    constexpr std::size_t NONCE_SIZE = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
-    crypto::ByteBuffer nonce(encrypted_vec.begin(), encrypted_vec.begin() + NONCE_SIZE);
-    crypto::ByteBuffer cipher(encrypted_vec.begin() + NONCE_SIZE, encrypted_vec.end());
 
     VaultHeader header{};
     header.magic = VAULT_MAGIC;

@@ -1,3 +1,4 @@
+#include "crypto/CryptoConstants.h"
 #include "crypto/VaultCrypto.h"
 #include "crypto/CryptoTypes.h"
 #include <cstring>
@@ -13,11 +14,6 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
     const ByteBuffer& salt
 ) 
 {
-    if (sodium_init() < 0) 
-    {
-        return CryptoError::CryptoInitFailed;
-    }
-
     // Validate salt size
     if (salt.size() != crypto_pwhash_SALTBYTES) 
     {
@@ -52,6 +48,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
 
 util::Expected<ByteBuffer, CryptoError> VaultCrypto::encrypt (
     const ByteBuffer& key,
+    const ByteBuffer& nonce,
     const ByteBuffer& plaintext
 )
 {
@@ -60,21 +57,15 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::encrypt (
         return CryptoError::InvalidKey;
     }
 
-    ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-    randombytes_buf(nonce.data(), nonce.size());
-
     ByteBuffer output(
-        nonce.size() +
         plaintext.size() + 
         crypto_aead_xchacha20poly1305_ietf_ABYTES
     );
 
-    std::memcpy(output.data(), nonce.data(), nonce.size());
-
     unsigned long long ciphertext_len = 0;
 
     int rc = crypto_aead_xchacha20poly1305_ietf_encrypt(
-        output.data() + nonce.size(), // output buffer
+        output.data(),                // output buffer
         &ciphertext_len,         // output size counter
         plaintext.data(),             // plaintext to encrypt
         plaintext.size(),          // plaintext size
@@ -92,7 +83,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::encrypt (
     }
     if (ciphertext_len != output.size())
     {
-        output.resize(nonce.size() + ciphertext_len);
+        output.resize(ciphertext_len);
     }
     return output; 
 }
