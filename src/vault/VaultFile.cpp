@@ -62,28 +62,10 @@ constexpr std::size_t VAULT_HEADER_SIZE =
 
 static_assert(sizeof(VaultHeader) == VAULT_HEADER_SIZE, "VaultHeader size mismatch");
 
-namespace 
-{
-crypto::ByteBuffer serialise_entries(const std::vector<vault::Entry>& entries)
-{
-    crypto::ByteBuffer out;
-    out.reserve(sizeof(uint32_t));
-
-    uint32_t count = static_cast<uint32_t>(entries.size());
-    out.insert(
-        out.end(),
-        reinterpret_cast<const uint8_t*>(&count),
-        reinterpret_cast<const uint8_t*>(&count) + sizeof(count)
-    );
-
-    return out;
-}
-} // unnamed namespace
-
 namespace vault 
 {
 // Note that CryptoContext::init() must be called by app before this runs
-util::Expected<void, VaultFileError> vault::VaultFile::create_new (
+util::Expected<void, VaultFileError> VaultFile::create_new (
     const std::filesystem::path& path,
     const util::SecureString& password
 )
@@ -144,9 +126,14 @@ util::Expected<void, VaultFileError> vault::VaultFile::create_new (
     );
     
     file.write(
-        reinterpret_cast<const char*>(cipher.data()), 
-        cipher.size()
+        reinterpret_cast<const char*>(encrypted.value().data()),
+        encrypted.value().size()
     );
+
+    if (!file)
+    {
+        return VaultFileError::IOError;
+    }
 
     file.close();
 
