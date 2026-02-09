@@ -9,6 +9,12 @@
 
 namespace vault
 {
+
+// Define header constants
+constexpr uint32_t VAULT_MAGIC = 0x5641554C;
+constexpr uint8_t VAULT_VERSION = 1;
+constexpr uint8_t KDF_TYPE_ARGON2ID = 1;
+
 class VaultFile
 {
     public:
@@ -23,7 +29,7 @@ class VaultFile
             const std::filesystem::path& path,
             const util::SecureString& password
         );
-
+        
         // --- Save Vault ---
         static util::Expected<void, VaultFileError> save (
             const std::filesystem::path& path,

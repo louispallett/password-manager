@@ -15,12 +15,6 @@
 #include "util/SecureString.h"
 #include "vault/VaultFileError.h"
 
-
-// Define header constants
-constexpr uint32_t VAULT_MAGIC = 0x5641554C;
-constexpr uint8_t VAULT_VERSION = 1;
-constexpr uint8_t KDF_TYPE_ARGON2ID = 1;
-
 #pragma pack(push, 1)
 struct VaultHeader
 {
