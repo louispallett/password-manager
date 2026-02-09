@@ -45,18 +45,8 @@ struct VaultHeader
 };
 #pragma pack(pop)
 
-constexpr std::size_t VAULT_HEADER_SIZE =
-      sizeof(uint32_t) // magic
-    + sizeof(uint8_t)  // version
-    + sizeof(uint8_t)  // kdf_type
-    + sizeof(uint16_t) // reserved
-    + sizeof(uint32_t) // argon_mem_kib
-    + sizeof(uint32_t) // argon_iters
-    + sizeof(uint32_t) // argon_parallelism
-    + crypto_pwhash_SALTBYTES
-    + crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
 
-static_assert(sizeof(VaultHeader) == VAULT_HEADER_SIZE, "VaultHeader size mismatch");
+static_assert(sizeof(VaultHeader) == vault::VAULT_HEADER_SIZE, "VaultHeader size mismatch");
 
 namespace vault 
 {
@@ -69,7 +59,11 @@ namespace
     {
         VaultHeader header;
         file.read(reinterpret_cast<char*>(&header), sizeof(header));
-        
+        if (!file)
+        {
+            return VaultFileError::InvalidFormat;
+        }
+
         // Check  versions and header information
         if (header.magic != VAULT_MAGIC || header.kdf_type != KDF_TYPE_ARGON2ID)
         {
@@ -177,7 +171,7 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
     auto header = read_and_validate_header(file);
     if (!header)
     {
-        return VaultFileError::IOError; 
+        return header.error(); 
     }
 
     // Derive key
@@ -215,6 +209,61 @@ util::Expected<void, VaultFileError> vault::VaultFile::save (
     const util::SecureString& password
 )
 {
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+    {
+        return VaultFileError::IOError;
+    }
+    
+    // Read header
+    auto header = read_and_validate_header(file);
+    if (!header)
+    {
+        return header.error();
+    }
 
+    // Derive key
+    auto key = crypto::VaultCrypto::derive_key(password, header.value().salt);
+    if (!key)
+    {
+        return VaultFileError::CryptoError;
+    }
+
+    // Generate new nonce
+    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::CryptoContext::random_bytes(nonce);
+
+    // Copy new nonce to header
+    std::memcpy(header.value().nonce, nonce.data(), nonce.size());
+
+    auto plaintext = vault.serialise();
+    auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
+    if (!encrypted)
+    {
+        return VaultFileError::CryptoError;
+    }
+    
+    std::ofstream output(path, std::ios::binary | std::ios::trunc);
+    if (!output)
+    {
+        return VaultFileError::IOError;
+    }
+
+    output.write(
+        reinterpret_cast<const char*>(&header.value()),
+        sizeof(VaultHeader)
+    );
+    
+    output.write(
+        reinterpret_cast<const char*>(encrypted.value().data()),
+        encrypted.value().size()
+    );
+
+    if (!output)
+    {
+        return VaultFileError::IOError;
+    }
+
+    return {};    
 }
 } // namespace vault
