@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <sodium.h>
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 #include <span>
@@ -140,12 +141,63 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
     return {};
 }
 
-util::Expected<Vault, VaultFileError> vault::VaultFile::load (
+util::Expected<Vault, VaultFileError> VaultFile::load (
     const std::filesystem::path& path,
     const util::SecureString& password
 )
 {
+    // Read file
+    std::ifstream file(path, std::ios::binary);
+    if (!file)
+    {
+        return VaultFileError::IOError;
+    }
 
+    // Get header
+    VaultHeader header;
+    file.read(reinterpret_cast<char*>(&header), sizeof(header));
+    if (!file)
+    {
+        return VaultFileError::IOError;
+    }
+
+    // Check  versions and header information
+    if (header.magic != VAULT_MAGIC || header.kdf_type != KDF_TYPE_ARGON2ID)
+    {
+        return VaultFileError::InvalidFormat;
+    }
+
+    if (header.version != VAULT_VERSION)
+    {
+        return VaultFileError::UnsupportedVersion;
+    }
+
+    // Derive key
+    // TODO: Currently not read Argon2 params... this is something we will utilately have to 
+    // address.
+    auto key = crypto::VaultCrypto::derive_key(password, header.salt_view());
+    if (!key)
+    {
+        return VaultFileError::CryptoError;
+    }
+
+    // Decrypt blob
+    crypto::ByteBuffer payload(
+       (std::istreambuf_iterator<char>(file)),
+       std::istreambuf_iterator<char>()
+    );
+    if (payload.empty())
+    {
+        return VaultFileError::InvalidFormat;
+    }
+    auto plaintext = crypto::VaultCrypto::decrypt(key.value(), header.nonce_view(), payload);
+    if (!plaintext)
+    {
+        return VaultFileError::CryptoError;
+    }
+
+    // Return our deserialised vault
+    return Vault::deserialise(plaintext.value());
 }
 
 util::Expected<void, VaultFileError> vault::VaultFile::save (
