@@ -2,9 +2,9 @@
 
 #include "crypto/CryptoTypes.h"
 #include "crypto/CryptoError.h"
-#include "crypto/CryptoConstants.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
+#include <span>
 
 namespace crypto 
 {
@@ -15,7 +15,7 @@ class VaultCrypto
         // Argon2id(password, salt) -> symmetric key
         static util::Expected<ByteBuffer, CryptoError> derive_key (
 	        const util::SecureString& password,
-	        const ByteBuffer& salt
+	        std::span<const uint8_t> salt
         );
 
         // --- Encryption ---
@@ -29,7 +29,7 @@ class VaultCrypto
          // --- Decryption ---   
         static util::Expected<ByteBuffer, CryptoError> decrypt (
 	        const ByteBuffer& key,
-            const ByteBuffer& nonce,
+            std::span<const uint8_t> nonce,
 	        const ByteBuffer& ciphertext
         );
 };

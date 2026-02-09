@@ -3,7 +3,9 @@
 #include <fstream>
 #include <sodium.h>
 #include <sodium/crypto_aead_xchacha20poly1305.h>
+#include <span>
 #include <vector>
+
 #include "crypto/CryptoContext.h"
 #include "crypto/CryptoTypes.h"
 #include "vault/VaultFile.h"
@@ -14,17 +16,19 @@
 
 
 // Define header constants
-#define VAULT_MAGIC 0x5641554C
-#define VAULT_VERSION 1
-#define KDF_TYPE_ARGON2ID 1
+constexpr uint32_t VAULT_MAGIC = 0x5641554C;
+constexpr uint8_t VAULT_VERSION = 1;
+constexpr uint8_t KDF_TYPE_ARGON2ID = 1;
 
 #pragma pack(push, 1)
 struct VaultHeader
 {
-    uint32_t magic;          
-    uint8_t  version;        
-    uint8_t  kdf_type;       
-    uint16_t reserved;       
+    // TODO: (NOTE) Header fields are stored in host endianness (v1 format) - this is something
+    // we will have to address ultimately.
+    uint32_t magic;
+    uint8_t  version;
+    uint8_t  kdf_type;
+    uint16_t reserved;
 
     uint32_t argon_mem_kib;
     uint32_t argon_iters;
@@ -32,6 +36,16 @@ struct VaultHeader
 
     uint8_t  salt[crypto_pwhash_SALTBYTES];
     uint8_t  nonce[crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
+
+    std::span<const uint8_t> salt_view() const noexcept
+    {
+        return { salt, crypto_pwhash_SALTBYTES };
+    }
+
+    std::span<const uint8_t> nonce_view() const noexcept
+    {
+        return { nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES };
+    }
 };
 #pragma pack(pop)
 

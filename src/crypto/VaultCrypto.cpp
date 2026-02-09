@@ -6,12 +6,13 @@
 #include <sodium/crypto_aead_chacha20poly1305.h>
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 #include <sodium/utils.h>
+#include <span>
 
 namespace crypto 
 {
 util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
     const util::SecureString& password,
-    const ByteBuffer& salt
+    std::span<const uint8_t> salt
 ) 
 {
     // Validate salt size
@@ -90,7 +91,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::encrypt (
 
 util::Expected<ByteBuffer, CryptoError> VaultCrypto::decrypt (
     const ByteBuffer& key,
-    const ByteBuffer& nonce,
+    std::span<const uint8_t> nonce,
     const ByteBuffer& ciphertext
 )
 {
