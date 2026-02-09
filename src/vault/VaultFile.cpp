@@ -18,6 +18,7 @@
 #pragma pack(push, 1)
 struct VaultHeader
 {
+    VaultHeader() {};
     // TODO: (NOTE) Header fields are stored in host endianness (v1 format) - this is something
     // we will have to address ultimately.
     uint32_t magic;
@@ -59,6 +60,31 @@ static_assert(sizeof(VaultHeader) == VAULT_HEADER_SIZE, "VaultHeader size mismat
 
 namespace vault 
 {
+
+namespace 
+{
+    util::Expected<VaultHeader, VaultFileError> read_and_validate_header(
+        std::istream& file
+    )
+    {
+        VaultHeader header;
+        file.read(reinterpret_cast<char*>(&header), sizeof(header));
+        
+        // Check  versions and header information
+        if (header.magic != VAULT_MAGIC || header.kdf_type != KDF_TYPE_ARGON2ID)
+        {
+            return VaultFileError::InvalidFormat;
+        }
+
+        if (header.version != VAULT_VERSION)
+        {
+            return VaultFileError::UnsupportedVersion;
+        }
+
+        return header;
+    }
+}
+
 // Note that CryptoContext::init() must be called by app before this runs
 util::Expected<void, VaultFileError> VaultFile::create_new (
     const std::filesystem::path& path,
@@ -148,28 +174,16 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
     }
 
     // Get header
-    VaultHeader header;
-    file.read(reinterpret_cast<char*>(&header), sizeof(header));
-    if (!file)
+    auto header = read_and_validate_header(file);
+    if (!header)
     {
-        return VaultFileError::IOError;
-    }
-
-    // Check  versions and header information
-    if (header.magic != VAULT_MAGIC || header.kdf_type != KDF_TYPE_ARGON2ID)
-    {
-        return VaultFileError::InvalidFormat;
-    }
-
-    if (header.version != VAULT_VERSION)
-    {
-        return VaultFileError::UnsupportedVersion;
+        return VaultFileError::IOError; 
     }
 
     // Derive key
     // TODO: Currently not read Argon2 params... this is something we will utilately have to 
     // address.
-    auto key = crypto::VaultCrypto::derive_key(password, header.salt_view());
+    auto key = crypto::VaultCrypto::derive_key(password, header.value().salt);
     if (!key)
     {
         return VaultFileError::CryptoError;
@@ -184,7 +198,7 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
     {
         return VaultFileError::InvalidFormat;
     }
-    auto plaintext = crypto::VaultCrypto::decrypt(key.value(), header.nonce_view(), payload);
+    auto plaintext = crypto::VaultCrypto::decrypt(key.value(), header.value().nonce, payload);
     if (!plaintext)
     {
         return VaultFileError::CryptoError;
@@ -193,6 +207,7 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
     // Return our deserialised vault
     return Vault::deserialise(plaintext.value());
 }
+
 
 util::Expected<void, VaultFileError> vault::VaultFile::save (
     const std::filesystem::path& path,
