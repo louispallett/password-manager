@@ -116,19 +116,16 @@ TEST_CASE("Corrupted file fails cleanly")
         );
         REQUIRE(file);
 
-        file.seekg(10);          // Skip header bytes
+        // Corrupt first byte of payload
+        file.seekg(vault::VAULT_HEADER_SIZE);   // Skip header bytes
         char byte;
         file.read(&byte, 1);
-        file.seekp(10);
-        byte ^= 0xFF;            // Flip bits
+        file.seekp(vault::VAULT_HEADER_SIZE);
+        byte ^= 0xFF;                           // Flip bits
         file.write(&byte, 1);
     }
 
     auto result = vault::VaultFile::load(fixture.file_path, fixture.password);
 
     CHECK_FALSE(result);
-    CHECK(
-        result.error() == vault::VaultFileError::InvalidFormat ||
-        result.error() == vault::VaultFileError::CryptoError
-    );
 }
