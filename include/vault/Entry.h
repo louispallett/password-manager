@@ -1,14 +1,24 @@
 #pragma once
 
-#include <string>
+#include "util/SecureString.h"
 
 namespace vault
 {
 struct Entry
 {
-    std::string name;
-    std::string username;
-    std::string secret;
+    util::SecureString name;
+    util::SecureString username;
+    util::SecureString secret;
+
+    Entry(
+        util::SecureString name_,
+        util::SecureString username_,
+        util::SecureString secret_
+    )
+        : name(std::move(name_))
+        , username(std::move(username_))
+        , secret(std::move(secret_))
+    {}
 
     bool operator==(const Entry& other) const noexcept
     {

@@ -1,6 +1,7 @@
 #include "util/SecureString.h"
 
 #include <cstring>   // std::strlen, std::memcpy
+#include <sodium/utils.h>
 #include <utility>   // std::move
 #include <cstddef>   // std::size_t
 #include <algorithm> // std::fill
@@ -43,10 +44,24 @@ SecureString& SecureString::operator=(SecureString&& other) noexcept
     return *this;
 }
 
+void SecureString::assign(const char* data, std::size_t size)
+{
+    std::fill(buffer_.begin(), buffer_.end(), 0);
+
+    if (!data || size == 0)
+    {
+        buffer_.clear();
+        return;
+    }
+
+    buffer_.resize(size);
+    std::memcpy(buffer_.data(), data, size);
+}
+
 // --- Destructor ---
 SecureString::~SecureString()
 {
-    std::fill(buffer_.begin(), buffer_.end(), 0);
+    sodium_memzero(buffer_.data(), buffer_.size()); 
 }
 
 // --- Accessors ---

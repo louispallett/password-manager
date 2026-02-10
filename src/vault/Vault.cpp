@@ -1,10 +1,17 @@
 #include "vault/Vault.h"
 #include "crypto/CryptoTypes.h"
+#include "util/SecureString.h"
 #include <cstdint>
 #include <cstring>
+#include <utility>
+
+
+namespace vault
+{
 
 namespace
 {
+
 bool read_u32(
     const crypto::ByteBuffer& data,
     size_t& offset,
@@ -19,30 +26,32 @@ bool read_u32(
     return true;
 }
 
-bool read_string(
+bool read_secure_string(
     const crypto::ByteBuffer& data,
     size_t& offset,
-    std::string& out
+    util::SecureString& out
 )
 {
     uint32_t len;
     if (!read_u32(data, offset, len))
+    {
         return false;
+    }
 
     if (offset + len > data.size())
+    {
         return false;
+    }
 
-    out.assign(
+    out.assign( 
         reinterpret_cast<const char*>(data.data() + offset),
         len
     );
     offset += len;
     return true;
 }
-}
 
-namespace vault
-{
+} // unnamed namespace
 
 crypto::ByteBuffer Vault::serialise() const
 {
@@ -54,10 +63,10 @@ crypto::ByteBuffer Vault::serialise() const
         out.insert(out.end(), p, p + sizeof(v));
     };
 
-    auto append_string = [&out, &append_u32](const std::string& s)
+    auto append_string = [&out, &append_u32](const util::SecureString& s)
     {
-        append_u32(static_cast<uint32_t>(s.size()));
-        out.insert(out.end(), s.begin(), s.end());
+        append_u32(static_cast<uint32_t>(s.size())); 
+        out.insert(out.end(), s.data(), s.data() + s.size()); 
     };
 
     // Entry count
@@ -66,9 +75,9 @@ crypto::ByteBuffer Vault::serialise() const
     // Entries
     for (const Entry& e : entries_)
     {
-        append_string(e.name);
-        append_string(e.username);
-        append_string(e.secret);
+        append_string(e.name); 
+        append_string(e.username); 
+        append_string(e.secret); 
     }
 
     return out;
@@ -89,16 +98,22 @@ util::Expected<Vault, VaultFileError> Vault::deserialise(
 
     for (uint32_t i = 0; i < count; ++i)
     {
-        Entry e;
+        util::SecureString name{""};
+        util::SecureString username{""};
+        util::SecureString secret{""};
 
-        if (!read_string(data, offset, e.name) ||
-            !read_string(data, offset, e.username) ||
-            !read_string(data, offset, e.secret))
+        if (!read_secure_string(data, offset, name) || 
+            !read_secure_string(data, offset, username) || 
+            !read_secure_string(data, offset, secret)) 
         {
             return VaultFileError::InvalidFormat;
         }
 
-        vault.add_entry(std::move(e));
+        vault.add_entry(Entry{
+            std::move(name),
+            std::move(username),
+            std::move(secret)
+        });
     }
 
     // Extra trailing garbage = corruption

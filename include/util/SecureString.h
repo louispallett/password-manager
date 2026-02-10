@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cmath>
 #include <cstddef>
+#include <cstring>
+#include <sodium/utils.h>
 #include <string_view>
 #include <vector>
 #include <cstdint>
@@ -24,6 +25,12 @@ class SecureString {
         // Access as bytes (KDF input)
         const std::uint8_t* data() const noexcept;
         std::size_t size() const noexcept;
+        bool operator==(const SecureString& other) const noexcept
+        {
+            return size() == other.size() && std::memcmp(data(), other.data(), size()) == 0;
+        }
+
+        void assign(const char* data, std::size_t size);
 
     private:
         std::vector<std::uint8_t> buffer_;

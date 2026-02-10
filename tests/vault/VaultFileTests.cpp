@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <doctest/doctest.h>
 #include <filesystem>
 #include <fstream>
@@ -80,13 +81,19 @@ TEST_CASE("Saving and reloading preserves entries")
     auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
     REQUIRE(loaded);
 
-    vault::Entry entry {
-        "Email",
-        "john.doe@example.com",
-        "HelloWorld123!"
+    vault::Entry expected {
+        util::SecureString{"Email"},
+        util::SecureString{"john.doe@example.com"},
+        util::SecureString{"HelloWorld123!"}
     };
 
-    loaded.value().add_entry(entry);
+    vault::Entry entry {
+        util::SecureString{"Email"},
+        util::SecureString{"john.doe@example.com"},
+        util::SecureString{"HelloWorld123!"}
+    };
+
+    loaded.value().add_entry(std::move(entry));
 
     REQUIRE(vault::VaultFile::save(
         fixture.file_path,
@@ -99,7 +106,7 @@ TEST_CASE("Saving and reloading preserves entries")
 
     const auto& entries = reloaded.value().entries();
     REQUIRE(entries.size() == 1);
-    CHECK(entries[0] == entry);
+    CHECK(entries[0] == expected);
 }
 
 TEST_CASE("Corrupted file fails cleanly")
