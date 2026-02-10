@@ -117,6 +117,8 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
     Vault vault;
     auto plaintext = vault.serialise();
     auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
+    crypto::CryptoContext::secure_zero(key.value());
+    crypto::CryptoContext::secure_zero(plaintext);
     if (!encrypted)
     {
         return VaultFileError::CryptoError;
@@ -134,6 +136,8 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
 
     std::memcpy(header.salt, salt.data(), salt.size());
     std::memcpy(header.nonce, nonce.data(), nonce.size());
+    crypto::CryptoContext::secure_zero(salt);
+    crypto::CryptoContext::secure_zero(nonce);
 
     file.write(
         reinterpret_cast<const char*>(&header),
@@ -193,6 +197,8 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
         return VaultFileError::InvalidFormat;
     }
     auto plaintext = crypto::VaultCrypto::decrypt(key.value(), header.value().nonce, payload);
+    crypto::CryptoContext::secure_zero(key.value());
+    crypto::CryptoContext::secure_zero(payload);
     if (!plaintext)
     {
         return VaultFileError::CryptoError;
@@ -238,6 +244,9 @@ util::Expected<void, VaultFileError> vault::VaultFile::save (
 
     auto plaintext = vault.serialise();
     auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
+    crypto::CryptoContext::secure_zero(nonce);
+    crypto::CryptoContext::secure_zero(key.value());
+    crypto::CryptoContext::secure_zero(plaintext);
     if (!encrypted)
     {
         return VaultFileError::CryptoError;
