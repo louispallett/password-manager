@@ -10,13 +10,13 @@ class Application;
 enum class Action
 {
 	None,
-	OpenVault,
+    CreateVault,
 	Unlock,
-	Lock,
 	AddEntry,
+    AlterEntry,
 	RemoveEntry,
-	ListEntries,
-	Save,
+	ListEntry,
+	SaveAndClose,
 	Quit
 };
 
@@ -28,11 +28,9 @@ class State
 		// Called once when entering the state
 		virtual void on_enter(Application& app) = 0;
 		
-		// Handle a user action and decide what happens next
-		virtual std::unique_ptr<State> handle(
-			Application& app,
-			Action action
-		) = 0;
+        virtual bool allows(Action action) const noexcept = 0;
+
+        virtual std::unique_ptr<State> transition(Action action) = 0;
 };
 
 } // namespace app
