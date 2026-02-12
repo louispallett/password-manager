@@ -19,6 +19,10 @@ add_library(vault_lib
     src/util/FileUtil.cpp
     src/vault/Vault.cpp
     src/vault/VaultFile.cpp
+    src/app/BootstrapState.cpp
+    src/app/LockedState.cpp
+    src/app/UnlockedState.cpp
+    src/app/ShutdownState.cpp
 )
 
 target_include_directories(vault_lib
