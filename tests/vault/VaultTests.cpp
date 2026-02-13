@@ -114,26 +114,27 @@ TEST_CASE("Updates an entry")
     CHECK(entries[0].secret == util::SecureString("HelloWorld1234!"));
 }
 
-// TEST_CASE("Deletes an entry")
-// {
-//     VaultTestFixture fixture;
-//     REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
+TEST_CASE("Deletes an entry")
+{
+    VaultTestFixture fixture;
+    REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
 
-//     auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
-//     REQUIRE(loaded);
+    auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
+    REQUIRE(loaded);
 
-//     vault::Entry entry 
-//     {
-//         util::SecureString{"Email"},
-//         util::SecureString{"john.doe@example.com"},
-//         util::SecureString{"HelloWorld123!"}
-//     };
+    vault::Entry entry 
+    {
+        util::SecureString{"Email"},
+        util::SecureString{"john.doe@example.com"},
+        util::SecureString{"HelloWorld123!"}
+    };
 
-//     auto& entries = loaded.value().entries();
-//     loaded.value().add_entry(std::move(entry));
-//     REQUIRE(entries.size() == 1);
+    auto& entries = loaded.value().entries();
+    loaded.value().add_entry(std::move(entry));
+    REQUIRE(entries.size() == 1);
 
-//     auto result = loaded.value().remove_entry(0);
-//     REQUIRE(result);
+    auto result = loaded.value().remove_entry(0);
+    REQUIRE(result);
 
-// };
+    CHECK(entries.size() == 0);
+};
