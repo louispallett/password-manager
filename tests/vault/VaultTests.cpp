@@ -29,8 +29,8 @@ TEST_CASE("Returns all entries")
         util::SecureString{"HelloWorld1234!"}
     };
 
-    loaded.value().add_entry(std::move(entry1));
-    loaded.value().add_entry(std::move(entry2));
+    REQUIRE(loaded.value().add_entry(std::move(entry1)));
+    REQUIRE(loaded.value().add_entry(std::move(entry2)));
 
     auto& entries = loaded.value().entries();
     CHECK(entries.size() == 2);
@@ -61,7 +61,7 @@ TEST_CASE("Saving and reloading preserves entries")
         util::SecureString{"HelloWorld123!"}
     };
 
-    loaded.value().add_entry(std::move(entry));
+    REQUIRE(loaded.value().add_entry(std::move(entry)));
 
     REQUIRE(vault::VaultFile::save(
         fixture.file_path,
@@ -96,7 +96,7 @@ TEST_CASE("Updates an entry")
     };
 
     auto& entries = loaded.value().entries();
-    loaded.value().add_entry(std::move(entry));
+    REQUIRE(loaded.value().add_entry(std::move(entry)));
     REQUIRE(entries.size() == 1);
 
     vault::Entry updated_entry 
@@ -130,7 +130,7 @@ TEST_CASE("Deletes an entry")
     };
 
     auto& entries = loaded.value().entries();
-    loaded.value().add_entry(std::move(entry));
+    REQUIRE(loaded.value().add_entry(std::move(entry)));
     REQUIRE(entries.size() == 1);
 
     auto result = loaded.value().remove_entry(0);

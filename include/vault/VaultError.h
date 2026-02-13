@@ -5,6 +5,7 @@ namespace vault
 
 enum class VaultError
 {
+    DuplicateEntry,
     EntryNotFound
 };
 

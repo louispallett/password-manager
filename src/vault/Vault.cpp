@@ -56,9 +56,17 @@ bool read_secure_string(
 
 } // unnamed namespace
 
-void Vault::add_entry (Entry entry)
+util::Expected<void, VaultError> Vault::add_entry (Entry entry)
 {
+    for (const auto& e : entries_)
+    {
+        if (e.name == entry.name)
+        {
+            return VaultError::DuplicateEntry;
+        }
+    }
     entries_.push_back(std::move(entry));
+    return {};
 }
 
 util::Expected<void, VaultError> Vault::update_entry(

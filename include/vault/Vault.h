@@ -18,7 +18,7 @@ class Vault
             return entries_;
         }
 
-        void add_entry (Entry entry);
+        util::Expected<void, VaultError> add_entry (Entry entry);
 
         util::Expected<void, VaultError> update_entry (
             size_t index,
