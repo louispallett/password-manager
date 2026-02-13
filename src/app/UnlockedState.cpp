@@ -15,7 +15,7 @@ bool UnlockedState::allows (Action action) const noexcept
 {
     switch (action)
     {
-        case Action::ListEntry:
+        case Action::ListEntries:
         case Action::AddEntry:
         case Action::AlterEntry:
         case Action::RemoveEntry:

@@ -44,7 +44,7 @@ TEST_CASE("Rejects CRUD Actions")
 {
     app::LockedState state;
 
-    REQUIRE_FALSE(state.allows(app::Action::ListEntry));
+    REQUIRE_FALSE(state.allows(app::Action::ListEntries));
     REQUIRE_FALSE(state.allows(app::Action::AddEntry));
     REQUIRE_FALSE(state.allows(app::Action::AlterEntry));
     CHECK_FALSE(state.allows(app::Action::RemoveEntry));
@@ -64,7 +64,7 @@ TEST_CASE("Allows CRUD Actions")
 {
     app::UnlockedState state;
 
-    REQUIRE(state.allows(app::Action::ListEntry));
+    REQUIRE(state.allows(app::Action::ListEntries));
     REQUIRE(state.allows(app::Action::AddEntry));
     REQUIRE(state.allows(app::Action::AlterEntry));
     CHECK(state.allows(app::Action::RemoveEntry));
@@ -95,7 +95,7 @@ TEST_CASE("Rejects all Actions")
 
     REQUIRE_FALSE(state.allows(app::Action::CreateVault));
     REQUIRE_FALSE(state.allows(app::Action::Unlock));
-    REQUIRE_FALSE(state.allows(app::Action::ListEntry));
+    REQUIRE_FALSE(state.allows(app::Action::ListEntries));
     REQUIRE_FALSE(state.allows(app::Action::AddEntry));
     REQUIRE_FALSE(state.allows(app::Action::AlterEntry));
     REQUIRE_FALSE(state.allows(app::Action::RemoveEntry));

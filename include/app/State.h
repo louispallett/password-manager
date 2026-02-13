@@ -1,11 +1,11 @@
 #pragma once
 
+#include "app/Application.h"
+
 #include <memory>
 
 namespace app
 {
-
-class Application;
 
 enum class Action
 {
@@ -15,7 +15,7 @@ enum class Action
 	AddEntry,
     AlterEntry,
 	RemoveEntry,
-	ListEntry,
+	ListEntries,
 	SaveAndClose,
 	Quit
 };
