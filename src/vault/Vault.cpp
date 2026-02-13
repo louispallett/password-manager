@@ -1,6 +1,9 @@
 #include "vault/Vault.h"
 #include "crypto/CryptoTypes.h"
+#include "util/Expected.h"
 #include "util/SecureString.h"
+#include "vault/Entry.h"
+#include "vault/VaultError.h"
 #include <cstdint>
 #include <cstring>
 #include <utility>
@@ -52,6 +55,39 @@ bool read_secure_string(
 }
 
 } // unnamed namespace
+
+void Vault::add_entry (Entry entry)
+{
+    entries_.push_back(std::move(entry));
+}
+
+util::Expected<void, VaultError> Vault::update_entry(
+    size_t index,
+    Entry updated
+)
+{
+    if (index >= entries_.size())
+    {
+        return VaultError::EntryNotFound;
+    }
+
+    entries_[index] = std::move(updated);
+
+    return {};
+}
+
+util::Expected<void, VaultError> Vault::remove_entry(
+    size_t index
+)
+{
+    if (index >= entries_.size())
+    {
+        return VaultError::EntryNotFound;
+    }
+
+    entries_.erase(entries_.begin() + index);
+    return {};
+}
 
 crypto::ByteBuffer Vault::serialise() const
 {
