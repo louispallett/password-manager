@@ -38,6 +38,34 @@ TEST_CASE("Returns all entries")
     CHECK(entries[1].secret == util::SecureString("HelloWorld1234!"));
 }
 
+TEST_CASE("Refuses to add entry with same name")
+{
+    VaultTestFixture fixture;
+    REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
+
+    auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
+    REQUIRE(loaded);
+
+    vault::Entry entry 
+    {
+        util::SecureString{"Email"},
+        util::SecureString{"john.doe@example.com"},
+        util::SecureString{"HelloWorld123!"}
+    };
+
+    vault::Entry new_entry
+    {
+        util::SecureString{"Email"},
+        util::SecureString{"jane.doe@example.com"},
+        util::SecureString{"HelloWorld1234!"}
+    };
+
+    auto& entries = loaded.value().entries();
+    REQUIRE(loaded.value().add_entry(std::move(entry)));
+    
+    CHECK_FALSE(loaded.value().add_entry(std::move(new_entry)));
+}
+
 TEST_CASE("Saving and reloading preserves entries")
 {
     VaultTestFixture fixture;
