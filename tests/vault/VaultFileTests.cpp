@@ -52,43 +52,6 @@ TEST_CASE("Loading with wrong password fails")
     CHECK(result.error() == vault::VaultFileError::CryptoError);
 }
 
-TEST_CASE("Saving and reloading preserves entries")
-{
-    VaultTestFixture fixture;
-
-    REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
-
-    auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
-    REQUIRE(loaded);
-
-    vault::Entry expected {
-        util::SecureString{"Email"},
-        util::SecureString{"john.doe@example.com"},
-        util::SecureString{"HelloWorld123!"}
-    };
-
-    vault::Entry entry {
-        util::SecureString{"Email"},
-        util::SecureString{"john.doe@example.com"},
-        util::SecureString{"HelloWorld123!"}
-    };
-
-    loaded.value().add_entry(std::move(entry));
-
-    REQUIRE(vault::VaultFile::save(
-        fixture.file_path,
-        loaded.value(),
-        fixture.password
-    ));
-
-    auto reloaded = vault::VaultFile::load(fixture.file_path, fixture.password);
-    REQUIRE(reloaded);
-
-    const auto& entries = reloaded.value().entries();
-    REQUIRE(entries.size() == 1);
-    CHECK(entries[0] == expected);
-}
-
 TEST_CASE("Corrupted file fails cleanly")
 {
     VaultTestFixture fixture;
