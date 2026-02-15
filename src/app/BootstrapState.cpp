@@ -8,7 +8,10 @@ namespace app
 
 void BootstrapState::on_enter (Application& app)
 {
-
+   // if (app.vault_exists())
+   // {
+   //      app.change_state(std::make_unique<LockedState>());
+   // }
 }
 
 bool BootstrapState::allows (Action action) const noexcept

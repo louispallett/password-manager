@@ -23,6 +23,7 @@ add_library(vault_lib
     src/app/LockedState.cpp
     src/app/UnlockedState.cpp
     src/app/ShutdownState.cpp
+    src/app/Application.cpp
 )
 
 target_include_directories(vault_lib

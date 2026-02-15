@@ -1,24 +1,14 @@
 #pragma once
 
+#include "app/Action.h"
 #include "app/Application.h"
 
 #include <memory>
 
+namespace app { class Application; }
+
 namespace app
 {
-
-enum class Action
-{
-	None,
-    CreateVault,
-	Unlock,
-	AddEntry,
-    AlterEntry,
-	RemoveEntry,
-	ListEntries,
-	SaveAndClose,
-	Quit
-};
 
 class State
 {
