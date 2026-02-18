@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <optional>
-#include <ncurses.h>
 
 #include "app/Action.h"
 #include "app/State.h"
