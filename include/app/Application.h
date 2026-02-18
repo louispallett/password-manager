@@ -4,12 +4,11 @@
 #include <optional>
 #include <string>
 
-#include "app/State.h"
 #include "ui/TerminalUI.h"
 #include "vault/Vault.h"
-#include "app/Action.h"
 
 namespace app { class State; }
+namespace app { enum class Action; }
 
 namespace app
 {

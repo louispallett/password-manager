@@ -8,6 +8,8 @@ namespace app
 class ShutdownState final : public State
 {
     public:
+        std::vector<MenuOption> menu_options() const override;
+
         void on_enter(Application& app) override;
 
         bool allows(Action action) const noexcept override;

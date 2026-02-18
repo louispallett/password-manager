@@ -4,6 +4,14 @@
 namespace app
 {
 
+std::vector<MenuOption> ShutdownState::menu_options () const
+{
+    return 
+    {
+        { Action::None, "" },
+    };
+}
+
 void ShutdownState::on_enter(Application& app)
 {
 

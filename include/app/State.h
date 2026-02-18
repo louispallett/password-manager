@@ -1,19 +1,28 @@
 #pragma once
 
 #include "app/Action.h"
-#include "app/Application.h"
 
 #include <memory>
+#include <vector>
+#include <string>
 
 namespace app { class Application; }
 
 namespace app
 {
 
+struct MenuOption
+{
+    Action action;
+    std::string label;
+};
+
 class State
 {
 	public:
 		virtual ~State() = default;
+
+        virtual std::vector<MenuOption> menu_options() const = 0;
 		
 		// Called once when entering the state
 		virtual void on_enter(Application& app) = 0;

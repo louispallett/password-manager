@@ -6,6 +6,15 @@
 namespace app
 {
 
+std::vector<MenuOption> BootstrapState::menu_options () const
+{
+    return 
+    {
+        { Action::CreateVault, "Create Vault" },
+        { Action::Quit, "Quit" }
+    };
+}
+
 void BootstrapState::on_enter (Application& app)
 {
    // if (app.vault_exists())

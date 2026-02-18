@@ -1,7 +1,13 @@
 #include "app/Application.h"
+#include "app/BootstrapState.h"
 #include "crypto/CryptoContext.h"
+#include "vault/Entry.h"
 #include "vault/VaultFile.h"
 #include "ui/TerminalUI.h"
+#include "app/State.h"
+#include "app/Action.h"
+#include "vault/VaultFileError.h"
+#include <memory>
 
 namespace app
 {
@@ -9,10 +15,14 @@ namespace app
 void Application::run()
 {
     crypto::CryptoContext::init();
+    ui_.initialize();
+    current_state_ = std::make_unique<BootstrapState>();
 
     while (running_)
     {
-        Action action = ui_.prompt_action();
+        auto options = current_state_->menu_options();
+
+        Action action = ui_.prompt_action(options);
 
         if (!current_state_->allows(action))
         {
@@ -31,12 +41,12 @@ void Application::handle_create_vault()
 
     auto result = vault::VaultFile::create_new(
         vault_path_,
-        password
+        std::move(password.value())
     );
 
     if (!result)
     {
-        ui_.show_error(result.error().message());
+        ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
@@ -47,11 +57,11 @@ void Application::handle_unlock()
 {
     auto password = ui_.prompt_master_password();
 
-    auto loaded = vault::VaultFile::load(vault_path_, password);
+    auto loaded = vault::VaultFile::load(vault_path_, std::move(password.value()));
     
     if (!loaded)
     {
-        ui_.show_error(loaded.error().message());
+        ui_.show_error(vault::to_string(loaded.error()));
         return;
     }
 
@@ -67,13 +77,24 @@ void Application::handle_add_entry()
         return;
     }
 
-    auto entry = ui_.prompt_entry();
+    auto name = ui_.prompt_input("Name");
+    auto username = ui_.prompt_input("Username");
+    auto password = ui_.prompt_input("Password");
+    if (!name || !username || !password)
+    {
+        return;
+    }
 
-    auto result = vault_->add_entry(std::move(entry));
+    vault::Entry new_entry {
+        std::move(name.value()), 
+        std::move(username.value()), 
+        std::move(password.value())
+    };
 
+    auto result = vault_->add_entry(std::move(new_entry));
     if (!result)
     {
-        ui_.show_error(result.error());
+        ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
@@ -94,12 +115,24 @@ void Application::handle_alter_entry()
         return;
     }
 
-    auto updated = ui_.prompt_entry();
+    auto name = ui_.prompt_input("Name");
+    auto username = ui_.prompt_input("Username");
+    auto password = ui_.prompt_input("Password");
+    if (!name || !username || !password)
+    {
+        return;
+    }
 
-    auto result = vault_->update_entry(*index, std::move(updated));
+    vault::Entry new_entry {
+        std::move(name.value()), 
+        std::move(username.value()), 
+        std::move(password.value())
+    };
+
+    auto result = vault_->update_entry(*index, std::move(new_entry));
     if (!result)
     {
-        ui_.show_error(result.error());
+        ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
@@ -120,10 +153,10 @@ void Application::handle_remove_entry()
         return;
     }
 
-    auto result = vault_->remove_entry(index);
+    auto result = vault_->remove_entry(index.value());
     if (!result)
     {
-        ui_.show_error(result.error());
+        ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
@@ -156,10 +189,10 @@ void Application::handle_save_and_close()
     }
 
     auto password = ui_.prompt_master_password();
-    auto result = vault::VaultFile::save(vault_path_, vault_, password);
+    auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
     if (!result)
     {
-        ui_.show_error(result.error());
+        ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
@@ -207,7 +240,7 @@ void Application::handle_action(Action action)
     }
 }
 
-void transition_state(Action action)
+void Application::transition_state(Action action)
 {
     auto new_state = current_state_->transition(action);
     if (!new_state)

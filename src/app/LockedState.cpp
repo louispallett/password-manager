@@ -7,6 +7,15 @@
 namespace app
 {
 
+std::vector<MenuOption> LockedState::menu_options () const
+{
+    return 
+    {
+        { Action::Unlock, "Unlock Vault" },
+        { Action::Quit, "Quit" }
+    };
+}
+
 void LockedState::on_enter (Application& app)
 {
 

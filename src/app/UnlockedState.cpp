@@ -6,6 +6,15 @@
 namespace app
 {
 
+std::vector<MenuOption> UnlockedState::menu_options () const
+{
+    return 
+    {
+        { Action::ListEntries, "ListEntries" },
+        { Action::SaveAndClose, "Save and Lock State" }
+    };
+}
+
 void UnlockedState::on_enter (Application& app)
 {
 
