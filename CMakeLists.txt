@@ -24,6 +24,7 @@ add_library(vault_lib
     src/app/UnlockedState.cpp
     src/app/ShutdownState.cpp
     src/app/Application.cpp
+    src/ui/TerminalUI.cpp
 )
 
 target_include_directories(vault_lib
@@ -31,17 +32,21 @@ target_include_directories(vault_lib
         ${PROJECT_SOURCE_DIR}/include
 )
 
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SODIUM REQUIRED libsodium)
+find_package(Curses REQUIRED)
 
 target_link_libraries(vault_lib
     PRIVATE
         ${SODIUM_LIBRARIES}
+        ${CURSES_LIBRARIES}
 )
 
 target_include_directories(vault_lib
     PRIVATE
         ${SODIUM_INCLUDE_DIRS}
+        ${CURSES_INCLUDE_DIRS}
 )
 
 add_executable(vault
