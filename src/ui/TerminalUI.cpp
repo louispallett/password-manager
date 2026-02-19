@@ -138,7 +138,7 @@ app::Action TerminalUI::prompt_action(
     const int content_start = m_content_start_row_ + (message_content_height_ * 2);
 
     const int win_height = LINES - content_start;
-    const int win_width  = COLS;
+    const int win_width  = COLS / 3;
 
     WINDOW* menu_win = newwin(win_height, win_width, content_start, 0);
     if (!menu_win)
@@ -154,8 +154,8 @@ app::Action TerminalUI::prompt_action(
     auto render = [&]()
     {
         werase(menu_win);
-        // mvwprintw(menu_win, 0, 0, "%s", "--- Menu ---"); 
-        // box(menu_win, 0, 0);
+        box(menu_win, 0, 0);
+        mvwprintw(menu_win, 0, COLS / 9, "%s", "--- Menu ---"); 
 
         for (size_t i = 0; i < options.size(); ++i)
         {
@@ -164,7 +164,7 @@ app::Action TerminalUI::prompt_action(
 
             mvwprintw(menu_win,
                       1 + static_cast<int>(i),
-                      2,
+                      1,
                       "%s",
                       options[i].label.c_str());
 
@@ -207,8 +207,8 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 
     const int num_entries    = static_cast<int>(entries.size());
     const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
-    const int viewport_top   = content_start;
-    const int viewport_left  = 0;
+    const int viewport_top   = content_start + 1;
+    const int viewport_left  = COLS / 3;
     const int viewport_bottom = LINES - 1;
     const int viewport_right  = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
@@ -237,7 +237,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
                 wattron(pad, A_REVERSE); 
             }
 
-            mvwhline(pad, i, 0, ' ', COLS);  
+            mvwhline(pad, i, 0, ' ', COLS/3);  
             mvwprintw(pad, i, 1, "%.*s", name_len, name_str);
 
             if (i == selected)
@@ -277,10 +277,10 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_password ()
 {
     const int win_height = message_content_height_;
-    const int win_width = COLS;
+    const int win_width = COLS / 3;
     const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
 
-    WINDOW* password_input_win = newwin(win_height, win_width, content_start, 0);
+    WINDOW* password_input_win = newwin(win_height, win_width, content_start, win_width);
     if (!password_input_win)
     {
         return std::string("");
@@ -330,10 +330,10 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_passwo
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::string prompt)
 {
     const int win_height = message_content_height_;
-    const int win_width = COLS;
+    const int win_width = COLS / 3;
     const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
 
-    WINDOW* prompt_input_win = newwin(win_height, win_width, content_start, 0);
+    WINDOW* prompt_input_win = newwin(win_height, win_width, content_start, win_width);
     if (!prompt_input_win)
     {
         return std::string("");
