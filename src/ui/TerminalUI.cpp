@@ -17,7 +17,6 @@ void TerminalUI::initialize()
     noecho();
     keypad(stdscr, TRUE); 
     curs_set(0);
-    attron(A_BOLD);
 
     if (has_colors())
     {
@@ -25,6 +24,7 @@ void TerminalUI::initialize()
         use_default_colors(); 
         init_pair(1, COLOR_GREEN, -1); 
         init_pair(2, COLOR_WHITE, COLOR_RED);
+        init_pair(3, COLOR_WHITE, COLOR_BLUE);
     }
 
     refresh(); 
@@ -51,6 +51,7 @@ void TerminalUI::display_logo()
         "             |__|/                                                                                          ",
     };
 
+    attron(A_BOLD);
     int i = 0;
     while (i < static_cast<int>(logo.size()))
     {
@@ -61,7 +62,7 @@ void TerminalUI::display_logo()
     mvprintw(i + 2, 1, "%s", "Terminally -> Locked is licensed under the Apache-2.0 license.");
     mvprintw(i + 3, 1, "%s", "If you haven't yet created a vault, you will first have to create one. Otherwise, you can unlock your existing vault.");
     mvprintw(i + 4, 1, "%s", "For more information on the technology used, please visit www.github.com/louispallett/password-manager.");
-    
+    attroff(A_BOLD);
 
     refresh();
 
@@ -74,14 +75,18 @@ void TerminalUI::show_message (const std::string& message)
     const int win_width = COLS;
 
     WINDOW* message_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
-    if (!message_win) return;
+    if (!message_win) 
+    {
+        return;
+    }
 
-    mvwprintw(message_win, 1, 1, "%s", message.c_str());
-    mvwprintw(message_win, 2, 1, "%s", "Press ANY key to continue.");
+    wbkgd(message_win, COLOR_PAIR(3));
+    wattron(message_win, COLOR_PAIR(3));     
 
-    wgetch(message_win);                     
+    box(message_win, 0, 0);
 
-    werase(message_win);
+    mvwprintw(message_win, 1, 1, "%s.", message.c_str());
+
     wrefresh(message_win);
     delwin(message_win);
 }
@@ -104,12 +109,13 @@ void TerminalUI::show_error(const std::string& error)
 
     wbkgd(err_win, COLOR_PAIR(2));
     wattron(err_win, COLOR_PAIR(2));     
+    wattron(err_win, A_BOLD);
 
     box(err_win, 0, 0);
 
-    mvwprintw(err_win, 1, 1, "%s", error.c_str());
+    mvwprintw(err_win, 1, 1, "Error: %s. Press ANY key to continue.", error.c_str());
+    wattroff(err_win, A_BOLD);
 
-    wattroff(err_win, COLOR_PAIR(1));
     wrefresh(err_win);
 
     wgetch(err_win);                     

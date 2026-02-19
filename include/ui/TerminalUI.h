@@ -35,8 +35,10 @@ public:
     void show_message(const std::string& message);
     void show_error(const std::string& error);
 
+    // Left side
     app::Action prompt_action(const std::vector<app::MenuOption>& options);
 
+    // Right side
     void list_entries(const std::vector<vault::Entry>& entries);
     util::Expected<util::SecureString, std::string> prompt_master_password();
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
