@@ -1,0 +1,38 @@
+name: C++ CI with Doctest
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up CMake
+      uses: jwlawson/actions/setup-cmake@v2
+      with:
+        cmake-version: '3.31.6'  
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsodium-dev libncurses-dev
+
+    - name: Build the project
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --parallel
+
+    - name: Run tests with Doctest
+      run: |
+        cd build
+        ctest --output-on-failure

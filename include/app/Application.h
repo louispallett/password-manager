@@ -18,8 +18,11 @@ class Application
 public:
     explicit Application(std::string vault_path);
 
-    void run();
+    void run(Application& app);
 
+    bool vault_exists();
+    void change_state(std::unique_ptr<State> new_state);
+    
 private:
     void handle_action(Action action);
     void transition_state(Action action);

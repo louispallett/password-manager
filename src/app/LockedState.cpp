@@ -16,9 +16,9 @@ std::vector<MenuOption> LockedState::menu_options () const
     };
 }
 
-void LockedState::on_enter (Application& app)
+std::unique_ptr<State> LockedState::on_enter (Application& app)
 {
-
+    return nullptr;
 }
 
 bool LockedState::allows (Action action) const noexcept

@@ -1,7 +1,9 @@
-#include <iostream>
+#include "app/Application.h"
 
-int main(void) 
+int main (void)
 {
-  std::cout << "Hello, World!\n";
-  return 0;
+    app::Application app("vault.dat");
+    app.run(app);
+
+    return 0;
 }

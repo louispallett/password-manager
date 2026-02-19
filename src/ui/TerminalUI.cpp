@@ -17,6 +17,7 @@ void TerminalUI::initialize()
     noecho();
     keypad(stdscr, TRUE); 
     curs_set(0);
+    attron(A_BOLD);
 
     if (has_colors())
     {
@@ -31,23 +32,40 @@ void TerminalUI::initialize()
 
 void TerminalUI::display_logo()
 {
-    // Your ASCII art lines
     const std::vector<std::string> logo = {
-        "██████╗  █████╗ ███████╗███████╗",
-        "██╔══██╗██╔══██╗██╔════╝██╔════╝",
-        "██████╔╝███████║███████╗███████╗",
-        "██╔═══╝ ██╔══██║╚════██║╚════██║",
-        "██║     ██║  ██║███████║███████║",
-        "╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝",
+        " _________  _______   ________  _____ ______   ___  ________   ________  ___       ___           ___    ___ ", 
+        "|\\___   ___\\\\  ___ \\ |\\   __  \\|\\   _ \\  _   \\|\\  \\|\\   ___  \\|\\   __  \\|\\  \\     |\\  \\         |\\  \\  /  /|",
+        "\\|___ \\  \\_\\ \\   __/|\\ \\  \\|\\  \\ \\  \\\\\\__\\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\|\\  \\ \\  \\    \\ \\  \\        \\ \\  \\/  / /",
+        "     \\ \\  \\ \\ \\  \\_|/_\\ \\   _  _\\ \\  \\\\|__| \\  \\ \\  \\ \\  \\\\ \\  \\ \\   __  \\ \\  \\    \\ \\  \\        \\ \\    / / ",
+        "      \\ \\  \\ \\ \\  \\_|\\ \\ \\  \\\\  \\\\ \\  \\    \\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\ \\  \\ \\  \\____\\ \\  \\____    \\/  /  /  ",
+        "       \\ \\__\\ \\ \\_______\\ \\__\\\\ _\\\\ \\__\\    \\ \\__\\ \\__\\ \\__\\\\ \\__\\ \\__\\ \\__\\ \\_______\\ \\_______\\__/  / /    ",
+        "        \\|__|  \\|_______|\\|__|\\|__|\\|__|     \\|__|\\|__|\\|__| \\|__|\\|__|\\|__|\\|_______|\\|_______|\\___/ /     ",
+        "                                                                                               \\|___|/      ",
+        "              ___         ___       ________  ________  ___  __    _______   ________                       ",
+        "             |\\  \\       |\\  \\     |\\   __  \\|\\   ____\\|\\  \\|\\  \\ |\\  ___ \\ |\\   ___ \\                      ",
+        " ____________\\ \\  \\      \\ \\  \\    \\ \\  \\|\\  \\ \\  \\___|\\ \\  \\/  /|\\ \\   __/|\\ \\  \\_|\\ \\                     ",
+        "|\\____________\\ \\  \\      \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\    \\ \\   ___  \\ \\  \\_|/_\\ \\  \\ \\\\ \\                    ",
+        "\\|____________|\\/  /|      \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\____\\ \\  \\\\ \\  \\ \\  \\_|\\ \\ \\  \\_\\\\ \\                   ",
+        "               /  //        \\ \\_______\\ \\_______\\ \\_______\\ \\__\\\\ \\__\\ \\_______\\ \\_______\\                  ",
+        "              /_ //          \\|_______|\\|_______|\\|_______|\\|__| \\|__|\\|_______|\\|_______|                  ",
+        "             |__|/                                                                                          ",
     };
 
-    for (int i = 0; i < static_cast<int>(logo.size()); ++i)
+    int i = 0;
+    while (i < static_cast<int>(logo.size()))
+    {
         mvprintw(i, 0, "%s", logo[i].c_str());
+        ++i;
+    }
+
+    mvprintw(i + 2, 1, "%s", "Terminally -> Locked is licensed under the Apache-2.0 license.");
+    mvprintw(i + 3, 1, "%s", "If you haven't yet created a vault, you will first have to create one. Otherwise, you can unlock your existing vault.");
+    mvprintw(i + 4, 1, "%s", "For more information on the technology used, please visit www.github.com/louispallett/password-manager.");
+    
 
     refresh();
 
-    // Store this so callers know where the content area begins
-    m_content_start_row_ = static_cast<int>(logo.size());
+    m_content_start_row_ = static_cast<int>(logo.size() + 5);
 }
 
 void TerminalUI::show_message (const std::string& message)
@@ -59,6 +77,7 @@ void TerminalUI::show_message (const std::string& message)
     if (!message_win) return;
 
     mvwprintw(message_win, 1, 1, "%s", message.c_str());
+    mvwprintw(message_win, 2, 1, "%s", "Press ANY key to continue.");
 
     wgetch(message_win);                     
 
@@ -72,15 +91,23 @@ void TerminalUI::show_error(const std::string& error)
     const int win_height = message_content_height_;
     const int win_width  = COLS;
 
-    WINDOW* err_win = newwin(win_height, win_width, m_content_start_row_, 0);
-    if (!err_win) return;
+    WINDOW* save_win = newwin(win_height, win_width, m_content_start_row_, 0);
+    if (!save_win) return;
+    wrefresh(save_win);
 
-    wbkgd(err_win, COLOR_PAIR(2));       
+    WINDOW* err_win = newwin(win_height, win_width, m_content_start_row_, 0);
+    if (!err_win) 
+    {
+        delwin(save_win);
+        return;
+    }
+
+    wbkgd(err_win, COLOR_PAIR(2));
     wattron(err_win, COLOR_PAIR(2));     
 
     box(err_win, 0, 0);
 
-    mvwprintw(err_win, 2, 1, "%s", error.c_str());
+    mvwprintw(err_win, 1, 1, "%s", error.c_str());
 
     wattroff(err_win, COLOR_PAIR(1));
     wrefresh(err_win);
@@ -90,6 +117,10 @@ void TerminalUI::show_error(const std::string& error)
     werase(err_win);
     wrefresh(err_win);
     delwin(err_win);
+
+    touchwin(save_win);
+    wrefresh(save_win);
+    delwin(save_win);
 }
 
 app::Action TerminalUI::prompt_action(
@@ -98,15 +129,17 @@ app::Action TerminalUI::prompt_action(
     if (options.empty())
         return app::Action::None;
 
-    const int content_start =
-        m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
 
     const int win_height = LINES - content_start;
     const int win_width  = COLS;
 
     WINDOW* menu_win = newwin(win_height, win_width, content_start, 0);
     if (!menu_win)
+    {
         return app::Action::None;
+    }
+
 
     keypad(menu_win, TRUE);
 
@@ -115,7 +148,8 @@ app::Action TerminalUI::prompt_action(
     auto render = [&]()
     {
         werase(menu_win);
-        box(menu_win, 0, 0);
+        // mvwprintw(menu_win, 0, 0, "%s", "--- Menu ---"); 
+        // box(menu_win, 0, 0);
 
         for (size_t i = 0; i < options.size(); ++i)
         {
@@ -173,19 +207,17 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     const int viewport_right  = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
 
-    // Pad is as tall as the full entry list, full terminal width
     WINDOW* pad = newpad(num_entries, COLS);
     if (!pad) 
     {
         return;
     }
 
-    keypad(pad, TRUE); // enable arrow keys on the pad
+    keypad(pad, TRUE); 
 
-    int selected   = 0; // currently highlighted entry
-    int pad_scroll = 0; // topmost visible row in the pad
+    int selected   = 0; 
+    int pad_scroll = 0; 
 
-    // Helper lambda to render all entries onto the pad
     auto render = [&]()
     {
         for (int i = 0; i < num_entries; ++i)
@@ -196,10 +228,10 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 
             if (i == selected)
             {
-                wattron(pad, A_REVERSE); // highlight selected row
+                wattron(pad, A_REVERSE); 
             }
 
-            mvwhline(pad, i, 0, ' ', COLS);  // blank the row first
+            mvwhline(pad, i, 0, ' ', COLS);  
             mvwprintw(pad, i, 1, "%.*s", name_len, name_str);
 
             if (i == selected)
@@ -208,11 +240,10 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
             }
         }
 
-        // Blit the visible portion of the pad to the screen
         prefresh(pad, pad_scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
     };
 
-    render(); // initial draw
+    render();
 
     while (true)
     {
@@ -221,14 +252,12 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
         if (ch == KEY_UP && selected > 0)
         {
             --selected;
-            // Scroll up if selected has gone above the viewport
             if (selected < pad_scroll)
                 --pad_scroll;
         }
         else if (ch == KEY_DOWN && selected < num_entries - 1)
         {
             ++selected;
-            // Scroll down if selected has gone below the viewport
             if (selected >= pad_scroll + viewport_height)
                 ++pad_scroll;
         }
@@ -267,14 +296,12 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_passwo
         if ((ch == KEY_BACKSPACE || ch == 127 || ch == '\b') && !buf.empty())
         {
             buf.pop_back();
-            // Erase the last asterisk from the screen
             const int cursor_x = input_col_start + static_cast<int>(buf.size());
             mvwaddch(password_input_win, 1, cursor_x, ' ');
         }
-        else if (ch >= 32 && ch < 127) // printable ASCII only
+        else if (ch >= 32 && ch < 127) 
         {
             buf.push_back(static_cast<char>(ch));
-            // Print asterisk at current cursor position
             const int cursor_x = input_col_start + static_cast<int>(buf.size()) - 1;
             mvwaddch(password_input_win, 1, cursor_x, '*');
         }
@@ -282,11 +309,9 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_passwo
         wrefresh(password_input_win);
     }
 
-    // Construct SecureString before wiping the buffer
     util::SecureString result(std::string_view(buf.data(), buf.size()));
     buf.clear();
     buf.shrink_to_fit();
-    // Wipe the intermediate buffer
     sodium_memzero(buf.data(), buf.size());
 
     werase(password_input_win);
@@ -327,7 +352,7 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
             const int cursor_x = input_col_start + static_cast<int>(buf.size());
             mvwaddch(prompt_input_win, 1, cursor_x, ' ');
         }
-        else if (ch >= 32 && ch < 127) // printable ASCII only
+        else if (ch >= 32 && ch < 127) 
         {
             buf.push_back(static_cast<char>(ch));
             const int cursor_x = input_col_start + static_cast<int>(buf.size()) - 1;
@@ -337,10 +362,8 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
         wrefresh(prompt_input_win);
     }
 
-    // Construct SecureString before wiping the buffer
     util::SecureString result(std::string_view(buf.data(), buf.size()));
 
-    // Wipe the intermediate buffer
     sodium_memzero(buf.data(), buf.capacity());
 
     werase(prompt_input_win);
@@ -350,10 +373,11 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
     return result;
 }
 
-// Ignore for now
+// TODO: Ignore for now
+// FIXME
 std::optional<size_t> TerminalUI::select_entry (const std::vector<vault::Entry>& entries)
 {
-
+    return std::optional<size_t>(5);
 }
 
 void TerminalUI::shutdown()
@@ -365,7 +389,7 @@ void TerminalUI::shutdown()
         curs_set(1);
         keypad(stdscr, FALSE);
 
-        endwin(); // Always the last NCurses call
+        endwin(); 
     }
 }
 

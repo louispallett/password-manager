@@ -7,16 +7,29 @@
 #include "app/State.h"
 #include "app/Action.h"
 #include "vault/VaultFileError.h"
+#include <filesystem>
 #include <memory>
 
 namespace app
 {
 
-void Application::run()
+Application::Application(std::string vault_path)
+    : vault_path_(std::move(vault_path))
+{
+
+}
+
+void Application::run(Application& app)
 {
     crypto::CryptoContext::init();
     ui_.initialize();
     current_state_ = std::make_unique<BootstrapState>();
+    if (auto next = current_state_->on_enter(*this))
+    {
+        current_state_ = std::move(next);
+    }
+
+    ui_.display_logo();
 
     while (running_)
     {
@@ -33,6 +46,58 @@ void Application::run()
         handle_action(action);
         transition_state(action);
     }
+}
+
+void Application::handle_action(Action action)
+{
+    switch (action) 
+    {
+        case Action::CreateVault:
+            handle_create_vault();
+            break;
+        case Action::Unlock:
+            handle_unlock();
+            break;
+        case Action::AddEntry:
+            handle_add_entry();
+            break;
+        case Action::AlterEntry:
+            handle_alter_entry();
+            break;
+        case Action::RemoveEntry:
+            handle_remove_entry();
+            break;
+        case Action::ListEntries:
+            handle_list_entries();
+            break;
+        case Action::SaveAndClose:
+            handle_save_and_close();
+            break;
+        case Action::Quit:
+            handle_quit();
+        default:
+            break;
+    }
+}
+
+void Application::transition_state(Action action)
+{
+    auto new_state = current_state_->transition(action);
+    if (!new_state)
+    {
+        return;
+    }
+    current_state_ = std::move(new_state);
+}
+
+bool Application::vault_exists()
+{
+    return std::filesystem::exists(vault_path_);
+}
+
+void Application::change_state(std::unique_ptr<State> new_state)
+{
+    current_state_ = std::move(new_state); 
 }
 
 void Application::handle_create_vault()
@@ -208,45 +273,5 @@ void Application::handle_quit()
     running_ = false;
 }
 
-void Application::handle_action(Action action)
-{
-    switch (action) 
-    {
-        case Action::CreateVault:
-            handle_create_vault();
-            break;
-        case Action::Unlock:
-            handle_unlock();
-            break;
-        case Action::AddEntry:
-            handle_add_entry();
-            break;
-        case Action::AlterEntry:
-            handle_alter_entry();
-            break;
-        case Action::RemoveEntry:
-            handle_remove_entry();
-            break;
-        case Action::ListEntries:
-            handle_list_entries();
-            break;
-        case Action::SaveAndClose:
-            handle_save_and_close();
-            break;
-        case Action::Quit:
-            handle_quit();
-        default:
-            break;
-    }
-}
-
-void Application::transition_state(Action action)
-{
-    auto new_state = current_state_->transition(action);
-    if (!new_state)
-    {
-        return;
-    }
-}
 
 }

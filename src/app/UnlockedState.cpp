@@ -10,14 +10,15 @@ std::vector<MenuOption> UnlockedState::menu_options () const
 {
     return 
     {
-        { Action::ListEntries, "ListEntries" },
-        { Action::SaveAndClose, "Save and Lock State" }
+        { Action::AddEntry, "ADD NEW ENTRY" },
+        { Action::ListEntries, "LIST ENTRIES" },
+        { Action::SaveAndClose, "SAVE AND LOCK STATE" }
     };
 }
 
-void UnlockedState::on_enter (Application& app)
+std::unique_ptr<State> UnlockedState::on_enter (Application& app)
 {
-
+    return nullptr;
 }
 
 bool UnlockedState::allows (Action action) const noexcept

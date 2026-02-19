@@ -25,7 +25,7 @@ class State
         virtual std::vector<MenuOption> menu_options() const = 0;
 		
 		// Called once when entering the state
-		virtual void on_enter(Application& app) = 0;
+		virtual std::unique_ptr<State> on_enter(Application& app) = 0;
 		
         virtual bool allows(Action action) const noexcept = 0;
 

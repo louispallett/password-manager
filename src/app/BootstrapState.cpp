@@ -2,6 +2,8 @@
 #include "app/State.h"
 #include "app/LockedState.h"
 #include "app/ShutdownState.h"
+#include "app/Application.h"
+#include <memory>
 
 namespace app
 {
@@ -15,12 +17,13 @@ std::vector<MenuOption> BootstrapState::menu_options () const
     };
 }
 
-void BootstrapState::on_enter (Application& app)
+std::unique_ptr<State> BootstrapState::on_enter (Application& app)
 {
-   // if (app.vault_exists())
-   // {
-   //      app.change_state(std::make_unique<LockedState>());
-   // }
+   if (app.vault_exists())
+   {
+       return std::make_unique<LockedState>();
+   }
+   return nullptr;
 }
 
 bool BootstrapState::allows (Action action) const noexcept
