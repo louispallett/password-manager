@@ -137,7 +137,7 @@ app::Action TerminalUI::prompt_action(
 
     const int content_start = m_content_start_row_ + (message_content_height_ * 2);
 
-    const int win_height = LINES - content_start;
+    const int win_height = options.size() + 5;
     const int win_width  = COLS / 3;
 
     WINDOW* menu_win = newwin(win_height, win_width, content_start, 0);
@@ -205,12 +205,12 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 {
     if (entries.empty()) return;
 
-    const int num_entries    = static_cast<int>(entries.size());
-    const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
-    const int viewport_top   = content_start + 1;
-    const int viewport_left  = COLS / 3;
+    const int num_entries = static_cast<int>(entries.size()) + 1;
+    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+    const int viewport_top = content_start + 1;
+    const int viewport_left = COLS / 3;
     const int viewport_bottom = LINES - 1;
-    const int viewport_right  = COLS - 1;
+    const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
 
     WINDOW* pad = newpad(num_entries, COLS);
@@ -228,21 +228,39 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     {
         for (int i = 0; i < num_entries; ++i)
         {
-            const auto& name = entries[i].name;
-            const char* name_str = reinterpret_cast<const char*>(name.data());
-            const int   name_len = static_cast<int>(name.size());
-
-            if (i == selected)
+            if (i < entries.size())
             {
-                wattron(pad, A_REVERSE); 
+                const auto& name = entries[i].name;
+                const char* name_str = reinterpret_cast<const char*>(name.data());
+                const int   name_len = static_cast<int>(name.size());
+
+                if (i == selected)
+                {
+                    wattron(pad, A_REVERSE); 
+                }
+
+                mvwhline(pad, i, 0, ' ', COLS/3);  
+                mvwprintw(pad, i, 1, "%.*s", name_len, name_str);
+
+                if (i == selected)
+                {
+                    wattroff(pad, A_REVERSE);
+                }
             }
-
-            mvwhline(pad, i, 0, ' ', COLS/3);  
-            mvwprintw(pad, i, 1, "%.*s", name_len, name_str);
-
-            if (i == selected)
+            else 
             {
-                wattroff(pad, A_REVERSE);
+                if (i == selected)
+                {
+                    wattron(pad, A_REVERSE);
+                }
+
+                mvwhline(pad, i, 0, ' ', COLS/3);
+                mvwprintw(pad, i, 1, "BACK");
+
+                if (i == selected)
+                {
+                    wattroff(pad, A_REVERSE);
+                }
             }
         }
 
@@ -266,6 +284,20 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
             ++selected;
             if (selected >= pad_scroll + viewport_height)
                 ++pad_scroll;
+        }
+        else if (ch == '\n' || ch == KEY_ENTER)
+        {
+            if (selected == num_entries - 1)
+            {
+                werase(pad);
+                wrefresh(pad);
+                delwin(pad);
+                return;
+            }
+            else
+            {
+                // List specific entry
+            }
         }
 
         render();
