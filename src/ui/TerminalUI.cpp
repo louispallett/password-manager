@@ -155,21 +155,42 @@ app::Action TerminalUI::prompt_action(
     {
         werase(menu_win);
         box(menu_win, 0, 0);
-        mvwprintw(menu_win, 0, COLS / 9, "%s", "--- Menu ---"); 
+        mvwprintw(menu_win, 0, 2, "%s", "Menu"); 
 
         for (size_t i = 0; i < options.size(); ++i)
         {
             if (static_cast<int>(i) == selected)
+            {
                 wattron(menu_win, A_REVERSE);
+                
+                mvwhline(
+                    menu_win,
+                    1 + static_cast<int>(i),
+                    1,
+                    ' ',
+                    win_width - 2
+                );
 
-            mvwprintw(menu_win,
-                      1 + static_cast<int>(i),
-                      1,
-                      "%s",
-                      options[i].label.c_str());
+                mvwprintw(
+                    menu_win,
+                    1 + static_cast<int>(i),
+                    1,
+                    "%s",
+                    options[i].label.c_str()
+                );
 
-            if (static_cast<int>(i) == selected)
                 wattroff(menu_win, A_REVERSE);
+            }
+            else
+            {
+                mvwprintw(
+                    menu_win,
+                    1 + static_cast<int>(i),
+                    1,
+                    "%s",
+                    options[i].label.c_str()
+                );
+            }
         }
 
         wrefresh(menu_win);
@@ -305,7 +326,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
                 }
 
                 mvwhline(pad, i, 0, ' ', COLS/3);
-                mvwprintw(pad, i, 1, "BACK");
+                mvwprintw(pad, i, COLS/6 - 2, "BACK");
 
                 if (i == selected)
                 {
