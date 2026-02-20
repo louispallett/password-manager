@@ -42,6 +42,7 @@ public:
     void list_entries(const std::vector<vault::Entry>& entries);
     util::Expected<util::SecureString, std::string> prompt_master_password();
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
+    void display_entry(const vault::Entry& entry);
 
     std::optional<size_t> select_entry(const std::vector<vault::Entry>& entries);
 

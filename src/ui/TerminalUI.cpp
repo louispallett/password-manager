@@ -201,6 +201,56 @@ app::Action TerminalUI::prompt_action(
     }
 }
 
+void TerminalUI::display_entry(const vault::Entry& entry)
+{
+    const int win_height = message_content_height_;
+    const int win_width = COLS / 3;
+    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+
+    WINDOW* entry_name = newwin(
+        win_height, 
+        win_width, 
+        content_start, 
+        win_width * 2
+    );
+    WINDOW* entry_username = newwin(
+        win_height, 
+        win_width, 
+        content_start + win_height, 
+        win_width * 2
+    );
+    WINDOW* entry_secret = newwin(
+        win_height, 
+        win_width, 
+        content_start + win_height * 2, 
+        win_width * 2
+    );
+    if (!entry_name || !entry_username || !entry_secret)
+    {
+        return;
+    }
+
+    box(entry_name, 0, 0);
+    mvwprintw(entry_name, 0, 1, "%s", "Name");
+    mvwprintw(entry_name, 1, 1, "%s", entry.name.data());
+
+    box(entry_username, 0, 0);
+    mvwprintw(entry_username, 0, 1, "%s", "Username");
+    mvwprintw(entry_username, 1, 1, "%s", entry.username.data());
+    
+    box(entry_secret, 0, 0);
+    mvwprintw(entry_secret, 0, 1, "%s", "Secret");
+    mvwprintw(entry_secret, 1, 1, "%s", entry.secret.data());
+
+    wrefresh(entry_username);
+    wrefresh(entry_secret);
+    wrefresh(entry_name);
+
+    delwin(entry_name);
+    delwin(entry_username);
+    delwin(entry_secret);
+}
+
 void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 {
     if (entries.empty()) return;
@@ -213,7 +263,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
 
-    WINDOW* pad = newpad(num_entries, COLS);
+    WINDOW* pad = newpad(num_entries, COLS / 3);
     if (!pad) 
     {
         return;
@@ -297,6 +347,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
             else
             {
                 // List specific entry
+                display_entry(entries[selected]);
             }
         }
 
