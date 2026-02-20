@@ -70,6 +70,9 @@ void Application::handle_action(Action action)
         case Action::ListEntries:
             handle_list_entries();
             break;
+        case Action::Save:
+            handle_save_only();
+            break;
         case Action::SaveAndClose:
             handle_save_and_close();
             break;
@@ -123,7 +126,6 @@ void Application::handle_unlock()
     auto password = ui_.prompt_master_password();
 
     auto loaded = vault::VaultFile::load(vault_path_, std::move(password.value()));
-    
     if (!loaded)
     {
         ui_.show_error(vault::to_string(loaded.error()));
@@ -243,6 +245,25 @@ void Application::handle_list_entries()
     }
 
     ui_.list_entries(vault_->entries());
+}
+
+void Application::handle_save_only()
+{
+    if (!vault_)
+    {
+        ui_.show_error("Vault not unlocked.");
+        return;
+    }
+
+    auto password = ui_.prompt_master_password();
+    auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
+    if (!result)
+    {
+        ui_.show_error(vault::to_string(result.error()));
+        return;
+    }
+
+    ui_.show_message("Vault Saved.");
 }
 
 void Application::handle_save_and_close()

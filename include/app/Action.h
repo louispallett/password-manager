@@ -12,6 +12,7 @@ enum class Action
     AlterEntry,
 	RemoveEntry,
 	ListEntries,
+    Save,
 	SaveAndClose,
 	Quit
 };

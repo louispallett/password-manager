@@ -7,8 +7,8 @@
 #include "ui/TerminalUI.h"
 #include "vault/Vault.h"
 
-namespace app { class State; }
 namespace app { enum class Action; }
+namespace app { class State; }
 
 namespace app
 {
@@ -33,6 +33,7 @@ private:
     void handle_alter_entry();
     void handle_remove_entry();
     void handle_list_entries();
+    void handle_save_only();
     void handle_save_and_close();
     void handle_quit();
 
