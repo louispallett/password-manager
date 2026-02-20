@@ -2,6 +2,7 @@
 build/
 Testing/
 .cache/
+*.dat
 
 # vim
 *.swp
