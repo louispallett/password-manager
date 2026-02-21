@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <optional>
 
 #include "app/Action.h"
 #include "app/State.h"
@@ -43,6 +42,7 @@ public:
     util::Expected<util::SecureString, std::string> prompt_master_password();
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
     void display_entry(const vault::Entry& entry);
+    void remove_entry (const size_t index);
 
 private:
     void shutdown();
