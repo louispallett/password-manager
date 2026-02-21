@@ -44,8 +44,6 @@ public:
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
     void display_entry(const vault::Entry& entry);
 
-    std::optional<size_t> select_entry(const std::vector<vault::Entry>& entries);
-
 private:
     void shutdown();
     int m_content_start_row_ = 0;

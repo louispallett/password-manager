@@ -483,13 +483,6 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
     return result;
 }
 
-// TODO: Ignore for now
-// FIXME
-std::optional<size_t> TerminalUI::select_entry (const std::vector<vault::Entry>& entries)
-{
-    return std::optional<size_t>(5);
-}
-
 void TerminalUI::shutdown()
 {
     if (!isendwin())

@@ -170,64 +170,64 @@ void Application::handle_add_entry()
 
 void Application::handle_alter_entry()
 {
-    if (!vault_)
-    {
-        ui_.show_error("Vault not unlocked");
-        return;
-    }
-
-    auto index = ui_.select_entry(vault_->entries());
-    if (!index)
-    {
-        return;
-    }
-
-    auto name = ui_.prompt_input("Name");
-    auto username = ui_.prompt_input("Username");
-    auto password = ui_.prompt_input("Password");
-    if (!name || !username || !password)
-    {
-        return;
-    }
-
-    vault::Entry new_entry {
-        std::move(name.value()), 
-        std::move(username.value()), 
-        std::move(password.value())
-    };
-
-    auto result = vault_->update_entry(*index, std::move(new_entry));
-    if (!result)
-    {
-        ui_.show_error(vault::to_string(result.error()));
-        return;
-    }
-
-    ui_.show_message("Entry updated successfully.");
+    // if (!vault_)
+    // {
+    //     ui_.show_error("Vault not unlocked");
+    //     return;
+    // }
+    //
+    // auto index = ui_.select_entry(vault_->entries());
+    // if (!index)
+    // {
+    //     return;
+    // }
+    //
+    // auto name = ui_.prompt_input("Name");
+    // auto username = ui_.prompt_input("Username");
+    // auto password = ui_.prompt_input("Password");
+    // if (!name || !username || !password)
+    // {
+    //     return;
+    // }
+    //
+    // vault::Entry new_entry {
+    //     std::move(name.value()), 
+    //     std::move(username.value()), 
+    //     std::move(password.value())
+    // };
+    //
+    // auto result = vault_->update_entry(*index, std::move(new_entry));
+    // if (!result)
+    // {
+    //     ui_.show_error(vault::to_string(result.error()));
+    //     return;
+    // }
+    //
+    // ui_.show_message("Entry updated successfully.");
 }
 
 void Application::handle_remove_entry()
 {
-    if (!vault_)
-    {
-        ui_.show_error("Vault not unlocked");
-        return;
-    }
-
-    auto index = ui_.select_entry(vault_->entries());
-    if (!index)
-    {
-        return;
-    }
-
-    auto result = vault_->remove_entry(index.value());
-    if (!result)
-    {
-        ui_.show_error(vault::to_string(result.error()));
-        return;
-    }
-
-    ui_.show_message("Entry deleted successfully.");
+    // if (!vault_)
+    // {
+    //     ui_.show_error("Vault not unlocked");
+    //     return;
+    // }
+    //
+    // auto index = ui_.select_entry(vault_->entries());
+    // if (!index)
+    // {
+    //     return;
+    // }
+    //
+    // auto result = vault_->remove_entry(index.value());
+    // if (!result)
+    // {
+    //     ui_.show_error(vault::to_string(result.error()));
+    //     return;
+    // }
+    //
+    // ui_.show_message("Entry deleted successfully.");
 }
 
 void Application::handle_list_entries()
