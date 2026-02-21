@@ -253,15 +253,15 @@ void TerminalUI::display_entry(const vault::Entry& entry)
 
     box(entry_name, 0, 0);
     mvwprintw(entry_name, 0, 1, "%s", "Name");
-    mvwprintw(entry_name, 1, 1, "%s", entry.name.data());
+    mvwprintw(entry_name, 1, 1, "%s", entry.name.c_str());
 
     box(entry_username, 0, 0);
     mvwprintw(entry_username, 0, 1, "%s", "Username");
-    mvwprintw(entry_username, 1, 1, "%s", entry.username.data());
+    mvwprintw(entry_username, 1, 1, "%s", entry.username.c_str());
     
     box(entry_secret, 0, 0);
     mvwprintw(entry_secret, 0, 1, "%s", "Secret");
-    mvwprintw(entry_secret, 1, 1, "%s", entry.secret.data());
+    mvwprintw(entry_secret, 1, 1, "%s", entry.secret.c_str());
 
     wrefresh(entry_username);
     wrefresh(entry_secret);

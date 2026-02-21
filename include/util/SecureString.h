@@ -31,6 +31,7 @@ class SecureString {
         }
 
         void assign(const char* data, std::size_t size);
+        const char* c_str() const noexcept;
 
     private:
         std::vector<std::uint8_t> buffer_;
