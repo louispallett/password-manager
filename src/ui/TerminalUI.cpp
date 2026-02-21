@@ -108,17 +108,16 @@ void TerminalUI::show_error(const std::string& error)
     }
 
     wbkgd(err_win, COLOR_PAIR(2));
-    wattron(err_win, COLOR_PAIR(2));     
-    wattron(err_win, A_BOLD);
+    wattron(err_win, COLOR_PAIR(2) | A_BOLD);     
 
     box(err_win, 0, 0);
 
     mvwprintw(err_win, 1, 1, "Error: %s. Press ANY key to continue.", error.c_str());
-    wattroff(err_win, A_BOLD);
+    wattroff(err_win, COLOR_PAIR(2) | A_BOLD);
 
     wrefresh(err_win);
 
-    wgetch(err_win);                     
+    wgetch(err_win);
 
     werase(err_win);
     wrefresh(err_win);
