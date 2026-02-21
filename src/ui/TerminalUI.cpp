@@ -173,7 +173,7 @@ app::Action TerminalUI::prompt_action(
                 mvwprintw(
                     menu_win,
                     1 + static_cast<int>(i),
-                    1,
+                    2,
                     "%s",
                     options[i].label.c_str()
                 );
@@ -296,6 +296,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 
     auto render = [&]()
     {
+        werase(pad);
         for (int i = 0; i < num_entries; ++i)
         {
             if (i < entries.size())
@@ -307,14 +308,15 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
                 if (i == selected)
                 {
                     wattron(pad, A_REVERSE); 
-                }
-
-                mvwhline(pad, i, 0, ' ', COLS/3);  
-                mvwprintw(pad, i, 1, "%.*s", name_len, name_str);
-
-                if (i == selected)
-                {
+                    
+                    mvwhline(pad, i, 0, ' ', COLS/3);
+                    mvwprintw(pad, i, 2, "%s", entries[i].name.c_str());
+                    
                     wattroff(pad, A_REVERSE);
+                }
+                else 
+                {
+                  mvwprintw(pad, i, 1, "%s", entries[i].name.c_str());
                 }
             }
             else 
