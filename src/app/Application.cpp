@@ -23,13 +23,19 @@ void Application::run(Application& app)
 {
     crypto::CryptoContext::init();
     ui_.initialize();
+    ui_.display_logo();
+    
     current_state_ = std::make_unique<BootstrapState>();
+    ui_.show_message("Searching for existing vault...");
     if (auto next = current_state_->on_enter(*this))
     {
+        ui_.show_message("Existing vault found");
         current_state_ = std::move(next);
     }
-
-    ui_.display_logo();
+    else 
+    {
+        ui_.show_message("No vault found. Please create a vault to continue");
+    }
 
     while (running_)
     {
@@ -118,7 +124,7 @@ void Application::handle_create_vault()
         return;
     }
 
-    ui_.show_message("Vault created successfully.");
+    ui_.show_message("Vault created successfully");
 }
 
 void Application::handle_unlock()
@@ -251,7 +257,7 @@ void Application::handle_save_only()
 {
     if (!vault_)
     {
-        ui_.show_error("Vault not unlocked.");
+        ui_.show_error("Vault not unlocked");
         return;
     }
 
@@ -283,7 +289,7 @@ void Application::handle_save_and_close()
     }
 
     vault_.reset();
-    ui_.show_message("Vault Saved and Closed.");
+    ui_.show_message("Vault Saved and Closed");
 }
 
 void Application::handle_quit()
