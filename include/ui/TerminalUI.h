@@ -43,7 +43,7 @@ public:
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
     bool generate_password();
     void display_entry(const vault::Entry& entry);
-    void remove_entry (const size_t index);
+    util::Expected<size_t, char> remove_entry (const std::vector<vault::Entry>& entries);
 
 private:
     void shutdown();

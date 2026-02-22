@@ -466,31 +466,26 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     delwin(menu);
 }
 
-void TerminalUI::remove_entry(const size_t index) 
+bool check_remove_entry(int m_content_start_row_, int message_content_height_) 
 {
   const int win_width = COLS / 3;
   const int content_start = m_content_start_row_ + (message_content_height_ * 2);
   
-  WINDOW* remove_message = newwin(
-      1, 
-      win_width, 
-      content_start + (message_content_height_ * 4), 
-      win_width * 2 
-  );
   WINDOW* menu = newwin(
-      1,
+      4,
       win_width,
-      content_start + (message_content_height_ * 4) + 1,
+      content_start,
       win_width * 2 
   );
 
   keypad(menu, true);
   int selected = 0;
-  std::vector<std::string> options = { "REMOVE ENTRY", "BACK" };
+  std::vector<std::string> options = { "REMOVE ENTRY", "CANCEL" };
 
   auto render = [&]()
   {
     werase(menu);
+    box(menu, 0, 0);
     for (size_t i = 0; i < options.size(); ++i)
     {
           if (static_cast<int>(i) == selected)
@@ -508,7 +503,7 @@ void TerminalUI::remove_entry(const size_t index)
               mvwprintw(
                   menu,
                   1 + static_cast<int>(i),
-                  1,
+                  2,
                   "%s",
                   options[i].data()
               );
@@ -525,11 +520,11 @@ void TerminalUI::remove_entry(const size_t index)
                   options[i].data()
               );
           }
-      }
+    }
+      mvwprintw(menu, 0, 1, "%s", "DELETE ENTRY?");
       wrefresh(menu);
   };
 
-  wrefresh(remove_message);
   render();
 
   while (true)
@@ -547,23 +542,131 @@ void TerminalUI::remove_entry(const size_t index)
       }
       else if (ch == '\n' || ch == KEY_ENTER)
       {
-        if (selected == 0) 
-        {
-          // handle delete
-
-        }
-          break;
+          werase(menu);
+          wrefresh(menu);
+          delwin(menu);
+          return selected == 0;
       }
 
       render();
   }
+}
 
-  werase(remove_message);
-  werase(menu);
-  wrefresh(remove_message);
-  wrefresh(menu);
-  delwin(remove_message);
-  delwin(menu);
+util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::Entry>& entries)
+{
+    if (entries.empty()) return 'l';
+
+    const int num_entries = static_cast<int>(entries.size()) + 1;
+    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+    const int viewport_top = content_start;
+    const int viewport_left = COLS / 3;
+    const int viewport_bottom = LINES - 1;
+    const int viewport_right = COLS - 1;
+    const int viewport_height = viewport_bottom - viewport_top + 1;
+
+    WINDOW* pad = newpad(num_entries + 2, COLS / 3);
+    if (!pad) return 'l';
+
+    keypad(pad, TRUE); 
+
+    size_t selected = 1; 
+    int pad_scroll = 0; 
+
+    auto render = [&]()
+    {
+        werase(pad);
+        box(pad, 0, 0);
+        for (int i = 1; i < num_entries; ++i)
+        {
+            if (i < entries.size())
+            {
+                const auto& name = entries[i].name;
+                const char* name_str = reinterpret_cast<const char*>(name.data());
+                const int   name_len = static_cast<int>(name.size());
+
+                if (i == selected)
+                {
+                    wattron(pad, A_REVERSE); 
+                    
+                    mvwhline(pad, i, 1, ' ', COLS/3 - 2);
+                    mvwprintw(pad, i, 2, "%s", entries[i].name.c_str());
+                    
+                    wattroff(pad, A_REVERSE);
+                }
+                else 
+                {
+                  mvwprintw(pad, i, 1, "%s", entries[i].name.c_str());
+                }
+            }
+            else 
+            {
+                if (i == selected)
+                {
+                    wattron(pad, A_REVERSE);
+                }
+
+                mvwhline(pad, i, 1, ' ', COLS/3 - 2);
+                mvwprintw(pad, i, COLS/6 - 2, "BACK");
+
+                if (i == selected)
+                {
+                    wattroff(pad, A_REVERSE);
+                }
+            }
+        }
+
+        mvwprintw(pad, 0, 1, "%s", "Entries");
+        prefresh(pad, pad_scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
+    };
+
+    render();
+
+    while (true)
+    {
+        int ch = wgetch(pad);
+
+        if (ch == KEY_UP && selected > 0)
+        {
+            --selected;
+            if (selected < pad_scroll)
+                --pad_scroll;
+        }
+        else if (ch == KEY_DOWN && selected < num_entries - 1)
+        {
+            ++selected;
+            if (selected >= pad_scroll + viewport_height)
+                ++pad_scroll;
+        }
+        else if (ch == '\n' || ch == KEY_ENTER)
+        {
+            if (selected == num_entries - 1)
+            {
+                werase(pad);
+                wrefresh(pad);
+                delwin(pad);
+                return 'l';
+            }
+            else
+            {
+                auto check = check_remove_entry(m_content_start_row_, message_content_height_);
+                werase(pad);
+                wrefresh(pad);
+                delwin(pad);
+                if (check)
+                {
+                    return selected;
+                }
+                else 
+                {
+                    return 'l';
+                }
+            }
+        }
+
+        render();
+    }
+
+    delwin(pad);
 }
 
 void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)

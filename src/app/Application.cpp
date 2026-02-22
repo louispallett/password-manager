@@ -10,6 +10,7 @@
 #include "app/State.h"
 #include "app/Action.h"
 #include "vault/VaultFileError.h"
+
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -268,26 +269,26 @@ void Application::handle_alter_entry()
 
 void Application::handle_remove_entry()
 {
-    // if (!vault_)
-    // {
-    //     ui_.show_error("Vault not unlocked");
-    //     return;
-    // }
-    //
-    // auto index = ui_.select_entry(vault_->entries());
-    // if (!index)
-    // {
-    //     return;
-    // }
-    //
-    // auto result = vault_->remove_entry(index.value());
-    // if (!result)
-    // {
-    //     ui_.show_error(vault::to_string(result.error()));
-    //     return;
-    // }
-    //
-    // ui_.show_message("Entry deleted successfully.");
+    if (!vault_)
+    {
+        ui_.show_error("Vault not unlocked");
+        return;
+    }
+
+    auto index = ui_.remove_entry(vault_->entries());
+    if (!index)
+    {
+        return;
+    }
+
+    auto result = vault_->remove_entry(index.value());
+    if (!result)
+    {
+        ui_.show_error(vault::to_string(result.error()));
+        return;
+    }
+
+    ui_.show_message("Entry successfully deleted");
 }
 
 void Application::handle_list_entries()

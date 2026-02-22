@@ -12,6 +12,7 @@ std::vector<MenuOption> UnlockedState::menu_options () const
     {
         { Action::AddEntry, "ADD NEW ENTRY" },
         { Action::ListEntries, "LIST ENTRIES" },
+        { Action::RemoveEntry, "REMOVE ENTRY" },
         { Action::Save, "SAVE" },
         { Action::SaveAndClose, "SAVE AND CLOSE VAULT" }
     };
