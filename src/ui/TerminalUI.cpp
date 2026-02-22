@@ -25,12 +25,37 @@ void TerminalUI::initialize()
     {
         start_color();
         use_default_colors(); 
-        init_pair(1, COLOR_GREEN, -1); 
-        init_pair(2, COLOR_WHITE, COLOR_RED);
-        init_pair(3, COLOR_WHITE, COLOR_BLUE);
+        init_pair(1, COLOR_WHITE, COLOR_RED);
+        init_pair(2, -1, 208);  // Orange
+        init_pair(3, -1, COLOR_YELLOW);
+        init_pair(4, -1, COLOR_GREEN);
+        init_pair(5, -1, COLOR_BLUE);
+        init_pair(6, -1, 93);  // Indigo
+        init_pair(7, -1, 129);  // Violet
     }
 
     refresh(); 
+}
+
+void display_flag(std::vector<std::string> logo) 
+{
+    int row = 0, colour = 1;
+    while (row < logo.size())
+    {
+        if (colour > 7) 
+        {
+            colour = 1;
+        }
+
+        int start_col = logo[row].size() + 1; 
+        for (int col = start_col; col < start_col + COLS; col++)
+        {
+            mvchgat(row, col, colour, A_NORMAL, colour, NULL);
+        }
+
+        row++;
+        colour++;
+    }
 }
 
 void TerminalUI::display_logo()
@@ -39,19 +64,19 @@ void TerminalUI::display_logo()
         " _________  _______   ________  _____ ______   ___  ________   ________  ___       ___           ___    ___ ", 
         "|\\___   ___\\\\  ___ \\ |\\   __  \\|\\   _ \\  _   \\|\\  \\|\\   ___  \\|\\   __  \\|\\  \\     |\\  \\         |\\  \\  /  /|",
         "\\|___ \\  \\_\\ \\   __/|\\ \\  \\|\\  \\ \\  \\\\\\__\\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\|\\  \\ \\  \\    \\ \\  \\        \\ \\  \\/  / /",
-        "     \\ \\  \\ \\ \\  \\_|/_\\ \\   _  _\\ \\  \\\\|__| \\  \\ \\  \\ \\  \\\\ \\  \\ \\   __  \\ \\  \\    \\ \\  \\        \\ \\    / / ",
-        "      \\ \\  \\ \\ \\  \\_|\\ \\ \\  \\\\  \\\\ \\  \\    \\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\ \\  \\ \\  \\____\\ \\  \\____    \\/  /  /  ",
-        "       \\ \\__\\ \\ \\_______\\ \\__\\\\ _\\\\ \\__\\    \\ \\__\\ \\__\\ \\__\\\\ \\__\\ \\__\\ \\__\\ \\_______\\ \\_______\\__/  / /    ",
-        "        \\|__|  \\|_______|\\|__|\\|__|\\|__|     \\|__|\\|__|\\|__| \\|__|\\|__|\\|__|\\|_______|\\|_______|\\___/ /     ",
-        "                                                                                               \\|___|/      ",
-        "              ___         ___       ________  ________  ___  __    _______   ________                       ",
-        "             |\\  \\       |\\  \\     |\\   __  \\|\\   ____\\|\\  \\|\\  \\ |\\  ___ \\ |\\   ___ \\                      ",
-        " ____________\\ \\  \\      \\ \\  \\    \\ \\  \\|\\  \\ \\  \\___|\\ \\  \\/  /|\\ \\   __/|\\ \\  \\_|\\ \\                     ",
-        "|\\____________\\ \\  \\      \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\    \\ \\   ___  \\ \\  \\_|/_\\ \\  \\ \\\\ \\                    ",
-        "\\|____________|\\/  /|      \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\____\\ \\  \\\\ \\  \\ \\  \\_|\\ \\ \\  \\_\\\\ \\                   ",
-        "               /  //        \\ \\_______\\ \\_______\\ \\_______\\ \\__\\\\ \\__\\ \\_______\\ \\_______\\                  ",
-        "              /_ //          \\|_______|\\|_______|\\|_______|\\|__| \\|__|\\|_______|\\|_______|                  ",
-        "             |__|/                                                                                          ",
+        "     \\ \\  \\ \\ \\  \\_|/_\\ \\   _  _\\ \\  \\\\|__| \\  \\ \\  \\ \\  \\\\ \\  \\ \\   __  \\ \\  \\    \\ \\  \\        \\ \\    / /",
+        "      \\ \\  \\ \\ \\  \\_|\\ \\ \\  \\\\  \\\\ \\  \\    \\ \\  \\ \\  \\ \\  \\\\ \\  \\ \\  \\ \\  \\ \\  \\____\\ \\  \\____    \\/  /  /",
+        "       \\ \\__\\ \\ \\_______\\ \\__\\\\ _\\\\ \\__\\    \\ \\__\\ \\__\\ \\__\\\\ \\__\\ \\__\\ \\__\\ \\_______\\ \\_______\\__/  / /",
+        "        \\|__|  \\|_______|\\|__|\\|__|\\|__|     \\|__|\\|__|\\|__| \\|__|\\|__|\\|__|\\|_______|\\|_______|\\___/ /",
+        "                                                                                               \\|___|/",
+        "              ___         ___       ________  ________  ___  __    _______   ________",
+        "             |\\  \\       |\\  \\     |\\   __  \\|\\   ____\\|\\  \\|\\  \\ |\\  ___ \\ |\\   ___ \\",
+        " ____________\\ \\  \\      \\ \\  \\    \\ \\  \\|\\  \\ \\  \\___|\\ \\  \\/  /|\\ \\   __/|\\ \\  \\_|\\ \\",
+        "|\\____________\\ \\  \\      \\ \\  \\    \\ \\  \\\\\\  \\ \\  \\    \\ \\   ___  \\ \\  \\_|/_\\ \\  \\ \\\\ \\",
+        "\\|____________|\\/  /|      \\ \\  \\____\\ \\  \\\\\\  \\ \\  \\____\\ \\  \\\\ \\  \\ \\  \\_|\\ \\ \\  \\_\\\\ \\",
+        "               /  //        \\ \\_______\\ \\_______\\ \\_______\\ \\__\\\\ \\__\\ \\_______\\ \\_______\\",
+        "              /_ //          \\|_______|\\|_______|\\|_______|\\|__| \\|__|\\|_______|\\|_______|",
+        "             |__|/",
     };
 
     attron(A_BOLD);
@@ -62,9 +87,11 @@ void TerminalUI::display_logo()
         ++i;
     }
 
-    mvprintw(i + 2, 1, "%s", "Terminally -> Locked is licensed under the Apache-2.0 license.");
-    mvprintw(i + 3, 1, "%s", "If you haven't yet created a vault, you will first have to create one. Otherwise, you can unlock your existing vault.");
-    mvprintw(i + 4, 1, "%s", "For more information on the technology used, please visit www.github.com/louispallett/password-manager.");
+    display_flag(logo);
+
+    mvprintw(i + 1, 1, "%s", "Terminally -> Locked is licensed under the Apache-2.0 license.");
+    mvprintw(i + 2, 1, "%s", "If you haven't yet created a vault, you will first have to create one. Otherwise, you can unlock your existing vault.");
+    mvprintw(i + 3, 1, "%s", "For more information on the technology used, please visit www.github.com/louispallett/password-manager.");
     attroff(A_BOLD);
 
     refresh();
@@ -83,8 +110,8 @@ void TerminalUI::show_message (const std::string& message)
         return;
     }
 
-    wbkgd(message_win, COLOR_PAIR(3));
-    wattron(message_win, COLOR_PAIR(3));     
+    wbkgd(message_win, COLOR_PAIR(5));
+    wattron(message_win, COLOR_PAIR(5));     
 
     box(message_win, 0, 0);
 
@@ -110,8 +137,8 @@ void TerminalUI::show_error(const std::string& error)
         return;
     }
 
-    wbkgd(err_win, COLOR_PAIR(2));
-    wattron(err_win, COLOR_PAIR(2) | A_BOLD);     
+    wbkgd(err_win, COLOR_PAIR(1));
+    wattron(err_win, COLOR_PAIR(1) | A_BOLD);     
 
     box(err_win, 0, 0);
 
@@ -135,7 +162,9 @@ app::Action TerminalUI::prompt_action(
     const std::vector<app::MenuOption>& options)
 {
     if (options.empty())
+    {
         return app::Action::None;
+    }
 
     const int content_start = m_content_start_row_ + (message_content_height_ * 2);
 
