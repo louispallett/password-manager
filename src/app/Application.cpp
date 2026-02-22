@@ -162,7 +162,7 @@ std::string generate_password_string()
     const std::string lowercase = "abcdefghijklmnopqrstuvwxyz";
     const std::string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const std::string digits = "0123456789";
-    const std::string specials = "!@#$%^&*()-_+=[]{}|;:,.<>?";
+    const std::string specials = "!@#$%&-_+;:,.?";
     const std::string all_chars = lowercase + uppercase + digits + specials;
     const size_t NUM_OF_CHARS = 32;
     std::string password(NUM_OF_CHARS, '\0');
