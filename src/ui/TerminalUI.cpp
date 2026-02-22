@@ -96,7 +96,7 @@ void TerminalUI::display_logo()
 
     refresh();
 
-    m_content_start_row_ = static_cast<int>(logo.size() + 5);
+    m_content_start_row_ = static_cast<int>(logo.size() + 4);
 }
 
 void TerminalUI::show_message (const std::string& message)
@@ -104,7 +104,7 @@ void TerminalUI::show_message (const std::string& message)
     const int win_height = message_content_height_;
     const int win_width = COLS;
 
-    WINDOW* message_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
+    WINDOW* message_win = newwin(win_height, win_width, m_content_start_row_, 0);
     if (!message_win) 
     {
         return;
@@ -126,11 +126,11 @@ void TerminalUI::show_error(const std::string& error)
     const int win_height = message_content_height_;
     const int win_width  = COLS;
 
-    WINDOW* save_win = newwin(win_height, win_width, m_content_start_row_, 0);
+    WINDOW* save_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
     if (!save_win) return;
     wrefresh(save_win);
 
-    WINDOW* err_win = newwin(win_height, win_width, m_content_start_row_, 0);
+    WINDOW* err_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
     if (!err_win) 
     {
         delwin(save_win);
@@ -823,7 +823,7 @@ bool TerminalUI::generate_password()
         wrefresh(menu);
     };
 
-    render();
+    render(); 
     wrefresh(question);
 
     while (true)
