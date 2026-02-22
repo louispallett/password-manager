@@ -204,7 +204,7 @@ void Application::handle_add_entry()
     }
 
     auto name = ui_.prompt_input("Name");
-    auto username = ui_.prompt_input("Username");
+    auto username = ui_.prompt_input("Username/Email");
     bool generate_password = ui_.generate_password();
     auto password = generate_password ? handle_generate_password() : ui_.prompt_input("Password");
     if (!name || !username || !password)
