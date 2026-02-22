@@ -251,6 +251,7 @@ app::Action TerminalUI::prompt_action(
 
         render();
     }
+    delwin(menu_win);
 }
 
 void TerminalUI::display_entry(const vault::Entry& entry)
@@ -307,11 +308,11 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     box(entry_secret, 0, 0);
     mvwprintw(entry_secret, 0, 1, "%s", "Password");
     wattron(entry_secret, A_BOLD);
-    mvwprintw(entry_secret, 1, 1, "%s", entry.secret.c_str());
+    mvwprintw(entry_secret, 1, 1, "%s", "********");
     wattroff(entry_secret, A_BOLD);
 
     keypad(menu, true);
-    std::vector<std::string> options = { "REMOVE ENTRY", "COPY PASSWORD TO CLIPBOARD", "BACK" };
+    std::vector<std::string> options = { "REVEAL ENTRY", "COPY PASSWORD TO CLIPBOARD", "BACK" };
     int selected = options.size() - 1;
 
     auto render = [&]()
@@ -377,7 +378,22 @@ void TerminalUI::display_entry(const vault::Entry& entry)
         {
             if (selected == 0) 
             {
-              // remove_entry(selected); // FIXME: selected is the menu index, not the entry index!
+                // Reveal entry
+                werase(entry_secret);
+                box(entry_secret, 0, 0);
+                mvwprintw(entry_secret, 0, 1, "%s", "Password");
+                mvwprintw(entry_secret, 1, 1, "%s", entry.secret.c_str());
+                wrefresh(entry_secret);
+                show_message("Press ANY key to continue");
+
+                int ch = wgetch(entry_secret);
+
+                werase(entry_secret);
+                box(entry_secret, 0, 0);
+                mvwprintw(entry_secret, 0, 1, "%s", "Password");
+                mvwprintw(entry_secret, 1, 1, "%s", "********");
+                wrefresh(entry_secret);
+                show_message("Vault Unlocked");
             }
             else if (selected == 1)
             {
@@ -404,6 +420,7 @@ void TerminalUI::display_entry(const vault::Entry& entry)
             
                 if (copy_to_clipboard(entry.secret.c_str()))
                 {
+                    show_message("Password copied to clipboard (for 30 seconds)");
                     std::thread([secret = entry.secret.c_str()]() {
                         std::this_thread::sleep_for(std::chrono::seconds(30));
                         const char* cmds[] = {
