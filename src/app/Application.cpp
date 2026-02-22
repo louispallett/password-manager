@@ -1,23 +1,27 @@
 #include "app/Application.h"
 #include "app/BootstrapState.h"
 #include "crypto/CryptoContext.h"
+#include "crypto/CryptoTypes.h"
+#include "util/Expected.h"
+#include "util/SecureString.h"
 #include "vault/Entry.h"
 #include "vault/VaultFile.h"
 #include "ui/TerminalUI.h"
 #include "app/State.h"
 #include "app/Action.h"
 #include "vault/VaultFileError.h"
+#include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <memory>
+#include <random>
 
 namespace app
 {
 
 Application::Application(std::string vault_path)
     : vault_path_(std::move(vault_path))
-{
-
-}
+{}
 
 void Application::run(Application& app)
 {
@@ -142,6 +146,55 @@ void Application::handle_unlock()
     ui_.show_message("Vault Unlocked");
 }
 
+char generate_random_char(const std::string& char_set) 
+{
+    crypto::ByteBuffer buffer(1);
+
+    crypto::CryptoContext::random_bytes(buffer);
+    unsigned char random_byte = buffer[0];
+    int random_index = random_byte % char_set.size();
+    
+    return char_set[random_index];
+}
+
+std::string generate_password_string() 
+{
+    const std::string lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const std::string uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const std::string digits = "0123456789";
+    const std::string specials = "!@#$%^&*()-_+=[]{}|;:,.<>?";
+    const std::string all_chars = lowercase + uppercase + digits + specials;
+    const size_t NUM_OF_CHARS = 32;
+    std::string password(NUM_OF_CHARS, '\0');
+
+    password[0] = generate_random_char(lowercase);
+    password[1] = generate_random_char(uppercase);
+    password[2] = generate_random_char(digits);
+    password[3] = generate_random_char(specials);
+
+    for (size_t i = 4; i < NUM_OF_CHARS; ++i) 
+    {
+        password[i] = generate_random_char(all_chars);
+    }
+
+    std::shuffle(password.begin(), password.end(), std::mt19937{static_cast<std::uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())});
+
+    return password;
+}
+
+util::Expected<util::SecureString, std::string> handle_generate_password()
+{
+    try 
+    {
+        std::string password = generate_password_string();
+        return util::SecureString(password.c_str());
+    } 
+    catch (const std::exception& e) 
+    {
+        return std::string("Error generating password: ") + e.what();
+    }
+}
+
 void Application::handle_add_entry()
 {
     if (!vault_)
@@ -152,7 +205,8 @@ void Application::handle_add_entry()
 
     auto name = ui_.prompt_input("Name");
     auto username = ui_.prompt_input("Username");
-    auto password = ui_.prompt_input("Password");
+    bool generate_password = ui_.generate_password();
+    auto password = generate_password ? handle_generate_password() : ui_.prompt_input("Password");
     if (!name || !username || !password)
     {
         return;

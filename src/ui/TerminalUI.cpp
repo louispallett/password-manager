@@ -685,6 +685,107 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
     return result;
 }
 
+bool TerminalUI::generate_password()
+{
+    const int win_height = message_content_height_;
+    const int win_width = COLS / 3;
+    const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
+    
+    WINDOW* question = newwin(2, win_width, content_start, win_width);
+    WINDOW* menu = newwin(2, win_width, content_start + 2, win_width);
+    if (!question || !menu)
+    {
+      return true;
+    }
+
+    mvwprintw(question, 1, 1, "%s", "AUTO-GENERATE PASSWORD?"); 
+    keypad(menu, true);
+    int selected = 0;
+    std::vector<std::string> options = { "YES", "NO (MANUAL ENTRY)" };
+    
+    auto render = [&]()
+    {
+        werase(menu);
+        for (size_t i = 0; i < options.size(); ++i)
+        {
+            if (static_cast<int>(i) == selected)
+            {
+                wattron(menu, A_REVERSE);
+                
+                mvwhline(
+                    menu,
+                    static_cast<int>(i),
+                    1,
+                    ' ',
+                    win_width - 2
+                );
+
+                mvwprintw(
+                    menu,
+                    static_cast<int>(i),
+                    2,
+                    "%s",
+                    options[i].data()
+                );
+
+                wattroff(menu, A_REVERSE);
+            }
+            else
+            {
+                mvwprintw(
+                    menu,
+                    static_cast<int>(i),
+                    1,
+                    "%s",
+                    options[i].data()
+                );
+            }
+        }
+        wrefresh(menu);
+    };
+
+    render();
+    wrefresh(question);
+
+    while (true)
+    {
+        int ch = wgetch(menu);
+
+        if (ch == KEY_UP && selected > 0)
+        {
+            --selected;
+        }
+        else if (ch == KEY_DOWN &&
+                 selected < static_cast<int>(options.size()) - 1)
+        {
+            ++selected;
+        }
+        else if (ch == '\n' || ch == KEY_ENTER)
+        {
+            werase(question);
+            werase(menu);
+            wrefresh(question);
+            wrefresh(menu);
+            delwin(question);
+            delwin(menu);
+            if (selected == 0) 
+            {
+                return true; 
+            }
+            return false;
+        }
+        render();
+    }
+
+  werase(question);
+  werase(menu);
+  wrefresh(question);
+  wrefresh(menu);
+  delwin(question);
+  delwin(menu);
+  return false;
+}
+
 void TerminalUI::shutdown()
 {
     if (!isendwin())
