@@ -4,8 +4,10 @@
 #include "util/Expected.h"
 #include "util/SecureString.h"
 
+#include <chrono>
 #include <cstddef>
 #include <ncurses.h>
+#include <thread>
 #include <vector>
 
 namespace ui
@@ -247,7 +249,7 @@ void TerminalUI::display_entry(const vault::Entry& entry)
         win_width * 2
     );
     WINDOW* menu = newwin(
-        win_height,
+        win_height + 1,
         win_width, 
         content_start + win_height * 3, 
         win_width * 2
@@ -274,20 +276,18 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     wattroff(entry_username, A_BOLD);
     
     box(entry_secret, 0, 0);
-    mvwprintw(entry_secret, 0, 1, "%s", "Secret");
+    mvwprintw(entry_secret, 0, 1, "%s", "Password");
     wattron(entry_secret, A_BOLD);
     mvwprintw(entry_secret, 1, 1, "%s", entry.secret.c_str());
     wattroff(entry_secret, A_BOLD);
 
     keypad(menu, true);
-    int selected = 1;
-    std::vector<std::string> options = { "REMOVE ENTRY", "BACK" };
-    // std::vector<std::string> options = { "BACK" };
+    std::vector<std::string> options = { "REMOVE ENTRY", "COPY PASSWORD TO CLIPBOARD", "BACK" };
+    int selected = options.size() - 1;
 
     auto render = [&]()
     {
       werase(menu);
-      // mvwprintw(menu, 0, 0, "%s", "Menu");
       for (size_t i = 0; i < options.size(); ++i)
       {
             if (static_cast<int>(i) == selected)
@@ -346,11 +346,59 @@ void TerminalUI::display_entry(const vault::Entry& entry)
         }
         else if (ch == '\n' || ch == KEY_ENTER)
         {
-          // if (selected == 0) 
-          // {
-          //   remove_entry(selected); // FIXME: selected is the menu index, not the entry index!
-          // }
-            break;
+            if (selected == 0) 
+            {
+              // remove_entry(selected); // FIXME: selected is the menu index, not the entry index!
+            }
+            else if (selected == 1)
+            {
+                auto copy_to_clipboard = [](const std::string& text) -> bool
+                {
+                    const char* cmds[] = {
+                        "xclip -selection clipboard 2>/dev/null",
+                        "wl-copy 2>/dev/null",
+                        "pbcopy 2>/dev/null",
+                        nullptr
+                    };
+                    for (int i = 0; cmds[i]; ++i)
+                    {
+                        FILE* pipe = popen(cmds[i], "w");
+                        if (pipe)
+                        {
+                            fputs(text.c_str(), pipe);
+                            int ret = pclose(pipe);
+                            if (ret == 0) return true;
+                        }
+                    }
+                    return false;
+                };
+            
+                if (copy_to_clipboard(entry.secret.c_str()))
+                {
+                    std::thread([secret = entry.secret.c_str()]() {
+                        std::this_thread::sleep_for(std::chrono::seconds(30));
+                        const char* cmds[] = {
+                            "xclip -selection clipboard 2>/dev/null",
+                            "wl-copy 2>/dev/null",
+                            "pbcopy 2>/dev/null",
+                            nullptr
+                        };
+                        for (int i = 0; cmds[i]; ++i)
+                        {
+                            FILE* pipe = popen(cmds[i], "w");
+                            if (pipe)
+                            {
+                                fputs("", pipe);
+                                if (pclose(pipe) == 0) break;
+                            }
+                        }
+                    }).detach();
+                }
+            } 
+            else 
+            {
+                break;
+            }
         }
 
         render();
