@@ -32,6 +32,13 @@ void TerminalUI::initialize()
         init_pair(5, -1, COLOR_BLUE);
         init_pair(6, -1, 93);  // Indigo
         init_pair(7, -1, 129);  // Violet
+        init_pair(8, COLOR_RED, -1);
+        init_pair(9, 208, -1);  // Orange
+        init_pair(10, COLOR_YELLOW, -1);
+        init_pair(11, COLOR_GREEN, -1);
+        init_pair(12, COLOR_BLUE, -1);
+        init_pair(13, 93, -1);  // Indigo
+        init_pair(14, 129, -1);  // Violet
     }
 
     refresh(); 
@@ -81,10 +88,18 @@ void TerminalUI::display_logo()
 
     attron(A_BOLD);
     int i = 0;
+    int colour = 8;
     while (i < static_cast<int>(logo.size()))
     {
+        if (colour > 14)
+        {
+            colour = 8;
+        }
+        attron(COLOR_PAIR(colour));
         mvprintw(i, 0, "%s", logo[i].c_str());
+        attroff(COLOR_PAIR(colour));
         ++i;
+        colour++;
     }
 
     display_flag(logo);
@@ -521,7 +536,7 @@ bool check_remove_entry(int m_content_start_row_, int message_content_height_)
               );
           }
     }
-      mvwprintw(menu, 0, 1, "%s", "DELETE ENTRY?");
+      mvwprintw(menu, 0, 1, "%s", "Delete Entry?");
       wrefresh(menu);
   };
 
