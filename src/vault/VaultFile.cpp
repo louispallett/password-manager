@@ -7,6 +7,7 @@
 #include <span>
 #include <vector>
 
+#include "crypto/CryptoConstants.h"
 #include "crypto/CryptoContext.h"
 #include "crypto/CryptoTypes.h"
 #include "vault/VaultFile.h"
@@ -91,8 +92,7 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
     }
 
     // Generate Salt
-    constexpr std::size_t SALT_SIZE = crypto_pwhash_SALTBYTES;
-    crypto::ByteBuffer salt(SALT_SIZE);
+    crypto::ByteBuffer salt(crypto::SALT_SIZE);
     crypto::CryptoContext::random_bytes(salt);
 
     // Generate key
@@ -110,10 +110,10 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
     }
 
     // Create nonce
-    crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    crypto::ByteBuffer nonce(crypto::NONCE_SIZE);
     crypto::CryptoContext::random_bytes(nonce);
 
-    // // Serialise empty entries
+    // Serialise empty entries
     Vault vault;
     auto plaintext = vault.serialise();
     auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);

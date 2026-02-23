@@ -1,7 +1,6 @@
 #include "crypto/CryptoConstants.h"
 #include "crypto/VaultCrypto.h"
 #include "crypto/CryptoTypes.h"
-#include <cstring>
 #include <sodium.h>
 #include <sodium/crypto_aead_chacha20poly1305.h>
 #include <sodium/crypto_aead_xchacha20poly1305.h>
@@ -16,7 +15,7 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
 ) 
 {
     // Validate salt size
-    if (salt.size() != crypto_pwhash_SALTBYTES) 
+    if (salt.size() != SALT_SIZE) 
     {
         return CryptoError::InvalidSalt;
     }
@@ -95,20 +94,18 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::decrypt (
     const ByteBuffer& ciphertext
 )
 {
-    if (key.size() != crypto_aead_xchacha20poly1305_ietf_KEYBYTES)
+    if (key.size() != KEY_SIZE)
     {
         return CryptoError::InvalidKey;
     }
 
-    constexpr std::size_t TAG_SIZE = crypto_aead_xchacha20poly1305_ietf_ABYTES;
-
-    if (ciphertext.size() < TAG_SIZE) 
+    if (ciphertext.size() < crypto::TAG_SIZE) 
     {
         return CryptoError::DecryptionFailed;
     }
 
     ByteBuffer output(
-        ciphertext.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES
+        ciphertext.size() - crypto::TAG_SIZE
     );
 
     unsigned long long plaintext_len = 0;
