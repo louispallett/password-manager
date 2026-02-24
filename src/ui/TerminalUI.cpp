@@ -9,6 +9,7 @@
 #include <ncurses.h>
 #include <thread>
 #include <vector>
+#include <unistd.h>
 
 namespace ui
 {
@@ -60,6 +61,8 @@ void display_flag(std::vector<std::string> logo)
             mvchgat(row, col, colour, A_NORMAL, colour, NULL);
         }
 
+        napms(10);
+        refresh();
         row++;
         colour++;
     }
@@ -86,6 +89,8 @@ void TerminalUI::display_logo()
         "             |__|/           ",
     };
 
+    display_flag(logo);
+
     attron(A_BOLD);
     int i = 0;
     int colour = 8;
@@ -98,11 +103,12 @@ void TerminalUI::display_logo()
         attron(COLOR_PAIR(colour));
         mvprintw(i, 0, "%s", logo[i].c_str());
         attroff(COLOR_PAIR(colour));
+        napms(60);
+        refresh();
         ++i;
         colour++;
     }
 
-    display_flag(logo);
 
     mvprintw(i + 1, 1, "%s", "Terminally -> Locked is licensed under the Apache-2.0 license.");
     mvprintw(i + 2, 1, "%s", "If you haven't yet created a vault, you will first have to create one. Otherwise, you can unlock your existing vault.");
