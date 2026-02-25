@@ -31,7 +31,6 @@ void Application::run(Application& app)
     ui_.display_logo();
     
     current_state_ = std::make_unique<BootstrapState>();
-    ui_.show_message("Searching for existing vault...");
     if (auto next = current_state_->on_enter(*this))
     {
         ui_.show_message("Existing vault found");
@@ -118,10 +117,12 @@ void Application::handle_create_vault()
 {
     auto password = ui_.prompt_master_password();
 
+    ui_.display_loading();
     auto result = vault::VaultFile::create_new(
         vault_path_,
         std::move(password.value())
     );
+    ui_.wipe_loading();
 
     if (!result)
     {
@@ -135,8 +136,9 @@ void Application::handle_create_vault()
 void Application::handle_unlock()
 {
     auto password = ui_.prompt_master_password();
-
+    ui_.display_loading();
     auto loaded = vault::VaultFile::load(vault_path_, std::move(password.value()));
+    ui_.wipe_loading();
     if (!loaded)
     {
         ui_.show_error(vault::to_string(loaded.error()));
@@ -200,7 +202,7 @@ void Application::handle_add_entry()
 {
     if (!vault_)
     {
-        ui_.show_error("Vault not unlocked.");
+        ui_.show_error("Vault not unlocked");
         return;
     }
 
@@ -226,7 +228,7 @@ void Application::handle_add_entry()
         return;
     }
 
-    ui_.show_message("Entry added successfully.");
+    ui_.show_message("Entry added successfully");
 }
 
 void Application::handle_alter_entry()
@@ -264,7 +266,7 @@ void Application::handle_alter_entry()
     //     return;
     // }
     //
-    // ui_.show_message("Entry updated successfully.");
+    // ui_.show_message("Entry updated successfully");
 }
 
 void Application::handle_remove_entry()
@@ -295,7 +297,7 @@ void Application::handle_list_entries()
 {
     if (!vault_)
     {
-        ui_.show_error("Vault not unlocked.");
+        ui_.show_error("Vault not unlocked");
         return;
     }
 
@@ -317,26 +319,30 @@ void Application::handle_save_only()
     }
 
     auto password = ui_.prompt_master_password();
+    ui_.display_loading();
     auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
+    ui_.wipe_loading();
     if (!result)
     {
         ui_.show_error(vault::to_string(result.error()));
         return;
     }
 
-    ui_.show_message("Vault Saved.");
+    ui_.show_message("Vault Saved");
 }
 
 void Application::handle_save_and_close()
 {
     if (!vault_)
     {
-        ui_.show_error("Vault not unlocked.");
+        ui_.show_error("Vault not unlocked");
         return;
     }
 
     auto password = ui_.prompt_master_password();
+    ui_.display_loading();
     auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
+    ui_.wipe_loading();
     if (!result)
     {
         ui_.show_error(vault::to_string(result.error()));

@@ -4,8 +4,10 @@
 #include "util/Expected.h"
 #include "util/SecureString.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <mutex>
 #include <ncurses.h>
 #include <thread>
 #include <vector>
@@ -118,14 +120,75 @@ void TerminalUI::display_logo()
     refresh();
 
     m_content_start_row_ = static_cast<int>(logo.size() + 4);
+    dyn_content_start_row_ = m_content_start_row_ + (message_content_height_ * 3);
+}
+
+WINDOW* loading_win = nullptr;
+
+void TerminalUI::animate_loading()
+{
+    int width = COLS / 1.5;
+    while(loading_active)
+    {
+        for (int i = 0; i < width && loading_active; i++)
+        {
+            mvwprintw(loading_win, 1, i, "%s", "#");
+            napms(5);
+            wrefresh(loading_win);
+        }
+
+        for (int i = 0; i < width && loading_active; i++)
+        {
+            mvwprintw(loading_win, 1, i, "%s", " ");
+            napms(5);
+            wrefresh(loading_win);
+        }
+    }
+}
+
+void TerminalUI::display_loading()
+{
+    std::lock_guard<std::mutex> lock(loading_mutex);
+    if (loading_active)
+    {
+        // wipe_loading();
+        return;
+    }
+
+    int height = message_content_height_, width = COLS / 1.5;
+    int starty = m_content_start_row_;
+    int startx = COLS / 6;
+
+    loading_win = newwin(height, width, starty, startx);
+    loading_active = true;
+    loading_thread = std::thread([this]() { animate_loading(); });
+}
+
+void TerminalUI::wipe_loading()
+{
+    std::lock_guard<std::mutex> lock(loading_mutex);
+    if (!loading_active)
+    {
+        return;
+    }
+    loading_active = false;
+    if (loading_thread.joinable())
+    {
+        loading_thread.join();
+    }
+    werase(loading_win);
+    wrefresh(loading_win);
+    delwin(loading_win);
+    loading_win = nullptr;
 }
 
 void TerminalUI::show_message (const std::string& message)
 {
+    const int win_start = m_content_start_row_ + message_content_height_;
     const int win_height = message_content_height_;
     const int win_width = COLS;
 
-    WINDOW* message_win = newwin(win_height, win_width, m_content_start_row_, 0);
+    WINDOW* message_win = newwin(win_height, win_width, win_start, 0);
     if (!message_win) 
     {
         return;
@@ -144,14 +207,15 @@ void TerminalUI::show_message (const std::string& message)
 
 void TerminalUI::show_error(const std::string& error)
 {
+    const int win_start = m_content_start_row_ + (message_content_height_ * 2);
     const int win_height = message_content_height_;
     const int win_width  = COLS;
 
-    WINDOW* save_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
+    WINDOW* save_win = newwin(win_height, win_width, win_start, 0);
     if (!save_win) return;
     wrefresh(save_win);
 
-    WINDOW* err_win = newwin(win_height, win_width, m_content_start_row_ + message_content_height_, 0);
+    WINDOW* err_win = newwin(win_height, win_width, win_start, 0);
     if (!err_win) 
     {
         delwin(save_win);
@@ -187,12 +251,10 @@ app::Action TerminalUI::prompt_action(
         return app::Action::None;
     }
 
-    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
-
     const int win_height = options.size() + 5;
     const int win_width  = COLS / 3;
 
-    WINDOW* menu_win = newwin(win_height, win_width, content_start, 0);
+    WINDOW* menu_win = newwin(win_height, win_width, dyn_content_start_row_, 0);
     if (!menu_win)
     {
         return app::Action::None;
@@ -279,7 +341,7 @@ void TerminalUI::display_entry(const vault::Entry& entry)
 {
     const int win_height = message_content_height_;
     const int win_width = COLS / 3;
-    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start = dyn_content_start_row_;
 
     WINDOW* entry_name = newwin(
         win_height, 
@@ -487,10 +549,10 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     delwin(menu);
 }
 
-bool check_remove_entry(int m_content_start_row_, int message_content_height_) 
+bool check_remove_entry(int dyn_content_start_row_, int message_content_height_) 
 {
   const int win_width = COLS / 3;
-  const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+  const int content_start = dyn_content_start_row_;
   
   WINDOW* menu = newwin(
       4,
@@ -578,7 +640,7 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
     if (entries.empty()) return 'l';
 
     const int num_entries = static_cast<int>(entries.size()) + 1;
-    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
     const int viewport_left = COLS / 3;
     const int viewport_bottom = LINES - 1;
@@ -669,7 +731,7 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
             }
             else
             {
-                auto check = check_remove_entry(m_content_start_row_, message_content_height_);
+                auto check = check_remove_entry(dyn_content_start_row_, message_content_height_);
                 werase(pad);
                 wrefresh(pad);
                 delwin(pad);
@@ -695,7 +757,7 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     if (entries.empty()) return;
 
     const int num_entries = static_cast<int>(entries.size()) + 1;
-    const int content_start = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
     const int viewport_left = COLS / 3;
     const int viewport_bottom = LINES - 1;
@@ -804,7 +866,7 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_passwo
 {
     const int win_height = message_content_height_;
     const int win_width = COLS / 3;
-    const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start  = dyn_content_start_row_;
 
     WINDOW* password_input_win = newwin(win_height, win_width, content_start, win_width);
     if (!password_input_win)
@@ -857,7 +919,7 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
 {
     const int win_height = message_content_height_;
     const int win_width = COLS / 3;
-    const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start  = dyn_content_start_row_;
 
     WINDOW* prompt_input_win = newwin(win_height, win_width, content_start, win_width);
     if (!prompt_input_win)
@@ -909,7 +971,7 @@ bool TerminalUI::generate_password()
 {
     const int win_height = message_content_height_;
     const int win_width = COLS / 3;
-    const int content_start  = m_content_start_row_ + (message_content_height_ * 2);
+    const int content_start  = dyn_content_start_row_;
     
     WINDOW* question = newwin(2, win_width, content_start, win_width);
     WINDOW* menu = newwin(2, win_width, content_start + 2, win_width);

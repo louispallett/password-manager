@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <thread>
 #include <vector>
 #include <string>
 
@@ -31,6 +33,10 @@ public:
 
     void display_logo();
 
+    void animate_loading();
+    void display_loading();
+    void wipe_loading();
+
     void show_message(const std::string& message);
     void show_error(const std::string& error);
 
@@ -48,8 +54,11 @@ public:
 private:
     void shutdown();
     int m_content_start_row_ = 0;
+    int dyn_content_start_row_ = 0;
     int message_content_height_ = 3;
-    int prompt_input_height_ = 5;
+    std::atomic<bool> loading_active{false};
+    std::thread loading_thread;
+    std::mutex loading_mutex; int prompt_input_height_ = 5;
 };
 
 }
