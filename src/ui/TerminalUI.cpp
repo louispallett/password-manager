@@ -328,6 +328,11 @@ app::Action TerminalUI::prompt_action(
         else if (ch == '\n' || ch == KEY_ENTER)
         {
             app::Action chosen = options[selected].action;
+            if (chosen == app::Action::SaveAndClose)
+            {
+                werase(menu_win);
+                wrefresh(menu_win);
+            }
             delwin(menu_win);
             return chosen;
         }
