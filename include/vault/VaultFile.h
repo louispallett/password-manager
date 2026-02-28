@@ -6,9 +6,11 @@
 
 #include "crypto/CryptoTypes.h"
 #include "util/Expected.h"
-#include "util/SecureString.h"
-#include "vault/Vault.h"
-#include "vault/VaultFileError.h"
+
+namespace util { class SecureString; }
+namespace vault { class Vault; }
+namespace vault { enum class VaultFileError; }
+namespace vault { class VaultSession; }
 
 namespace vault
 {

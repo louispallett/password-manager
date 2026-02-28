@@ -1,6 +1,5 @@
 #pragma once
 
-#include "crypto/CryptoConstants.h"
 #include "crypto/CryptoTypes.h"
 
 namespace crypto 
