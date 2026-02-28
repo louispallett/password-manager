@@ -15,6 +15,7 @@
 #include "util/Expected.h"
 #include "util/SecureString.h"
 #include "vault/VaultFileError.h"
+#include "vault/VaultSession.h"
 
 #pragma pack(push, 1)
 struct VaultHeader
@@ -159,7 +160,7 @@ util::Expected<void, VaultFileError> VaultFile::create_new (
     return {};
 }
 
-util::Expected<Vault, VaultFileError> VaultFile::load (
+util::Expected<VaultSession, VaultFileError> VaultFile::load (
     const std::filesystem::path& path,
     const util::SecureString& password
 )
@@ -197,22 +198,34 @@ util::Expected<Vault, VaultFileError> VaultFile::load (
         return VaultFileError::InvalidFormat;
     }
     auto plaintext = crypto::VaultCrypto::decrypt(key.value(), header.value().nonce, payload);
-    crypto::CryptoContext::secure_zero(key.value());
     crypto::CryptoContext::secure_zero(payload);
     if (!plaintext)
     {
+        crypto::CryptoContext::secure_zero(key.value());
         return VaultFileError::CryptoError;
     }
 
-    // Return our deserialised vault
-    return Vault::deserialise(plaintext.value());
+    auto vault = Vault::deserialise(plaintext.value());
+    crypto::CryptoContext::secure_zero(plaintext.value());
+    if (!vault) 
+    {
+        crypto::CryptoContext::secure_zero(key.value());
+        crypto::CryptoContext::secure_zero(plaintext.value()); 
+        return VaultFileError::InvalidFormat;
+    }
+
+    return VaultSession(
+        std::move(vault.value()),
+        std::move(key.value()),
+        path
+    );
 }
 
 
 util::Expected<void, VaultFileError> vault::VaultFile::save (
     const std::filesystem::path& path,
     const Vault& vault,
-    const util::SecureString& password
+    const crypto::ByteBuffer key
 )
 {
     std::ifstream file(path, std::ios::binary);
@@ -228,13 +241,6 @@ util::Expected<void, VaultFileError> vault::VaultFile::save (
         return header.error();
     }
 
-    // Derive key
-    auto key = crypto::VaultCrypto::derive_key(password, header.value().salt);
-    if (!key)
-    {
-        return VaultFileError::CryptoError;
-    }
-
     // Generate new nonce
     crypto::ByteBuffer nonce(crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
     crypto::CryptoContext::random_bytes(nonce);
@@ -243,9 +249,8 @@ util::Expected<void, VaultFileError> vault::VaultFile::save (
     std::memcpy(header.value().nonce, nonce.data(), nonce.size());
 
     auto plaintext = vault.serialise();
-    auto encrypted = crypto::VaultCrypto::encrypt(key.value(), nonce, plaintext);
+    auto encrypted = crypto::VaultCrypto::encrypt(key, nonce, plaintext);
     crypto::CryptoContext::secure_zero(nonce);
-    crypto::CryptoContext::secure_zero(key.value());
     crypto::CryptoContext::secure_zero(plaintext);
     if (!encrypted)
     {

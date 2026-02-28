@@ -5,7 +5,7 @@
 #include <string>
 
 #include "ui/TerminalUI.h"
-#include "vault/Vault.h"
+#include "vault/VaultSession.h"
 
 namespace app { enum class Action; }
 namespace app { class State; }
@@ -40,10 +40,9 @@ private:
 private:
     std::string vault_path_;
     std::unique_ptr<State> current_state_;
-    std::optional<vault::Vault> vault_;
+    std::optional<vault::VaultSession> session_;
     ui::TerminalUI ui_;
     bool running_ { true };
-
 };
 
 }

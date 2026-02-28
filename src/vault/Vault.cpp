@@ -4,6 +4,7 @@
 #include "util/SecureString.h"
 #include "vault/Entry.h"
 #include "vault/VaultError.h"
+#include "vault/VaultFileError.h"
 #include <cstdint>
 #include <cstring>
 #include <utility>

@@ -4,6 +4,7 @@
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 #include <sodium/crypto_pwhash.h>
 
+#include "crypto/CryptoTypes.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
 #include "vault/Vault.h"
@@ -38,7 +39,7 @@ class VaultFile
         );
 
         // --- Load Vault ---
-        static util::Expected<Vault, VaultFileError> load (
+        static util::Expected<VaultSession, VaultFileError> load (
             const std::filesystem::path& path,
             const util::SecureString& password
         );
@@ -47,7 +48,7 @@ class VaultFile
         static util::Expected<void, VaultFileError> save (
             const std::filesystem::path& path,
             const Vault& vault,
-            const util::SecureString& password
-        );
+            const crypto::ByteBuffer key
+       );
 };
 }

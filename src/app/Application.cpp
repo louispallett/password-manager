@@ -5,6 +5,7 @@
 #include "util/Expected.h"
 #include "util/SecureString.h"
 #include "vault/Entry.h"
+#include "vault/VaultError.h"
 #include "vault/VaultFile.h"
 #include "ui/TerminalUI.h"
 #include "app/State.h"
@@ -145,7 +146,7 @@ void Application::handle_unlock()
         return;
     }
 
-    vault_ = std::move(loaded.value());
+    session_.emplace(std::move(loaded.value()));
     ui_.show_message("Vault Unlocked");
 }
 
@@ -200,7 +201,7 @@ util::Expected<util::SecureString, std::string> handle_generate_password()
 
 void Application::handle_add_entry()
 {
-    if (!vault_)
+    if (!session_)
     {
         ui_.show_error("Vault not unlocked");
         return;
@@ -221,10 +222,10 @@ void Application::handle_add_entry()
         std::move(password.value())
     };
 
-    auto result = vault_->add_entry(std::move(new_entry));
+    auto result = session_->add_entry(std::move(new_entry));
     if (!result)
     {
-        ui_.show_error(vault::to_string(result.error()));
+        ui_.show_error(vault::to_string(static_cast<vault::VaultError>(result.error())));
         return;
     }
 
@@ -271,19 +272,19 @@ void Application::handle_alter_entry()
 
 void Application::handle_remove_entry()
 {
-    if (!vault_)
+    if (!session_)
     {
         ui_.show_error("Vault not unlocked");
         return;
     }
 
-    auto index = ui_.remove_entry(vault_->entries());
+    auto index = ui_.remove_entry(session_->entries());
     if (!index)
     {
         return;
     }
 
-    auto result = vault_->remove_entry(index.value());
+    auto result = session_->remove_entry(index.value());
     if (!result)
     {
         ui_.show_error(vault::to_string(result.error()));
@@ -295,32 +296,31 @@ void Application::handle_remove_entry()
 
 void Application::handle_list_entries()
 {
-    if (!vault_)
+    if (!session_)
     {
         ui_.show_error("Vault not unlocked");
         return;
     }
 
-    if(vault_->entries().size() < 1)
+    if(session_->entries().size() < 1)
     {
         ui_.show_message("No entries");
         return;
     }
 
-    ui_.list_entries(vault_->entries());
+    ui_.list_entries(session_->entries());
 }
 
 void Application::handle_save_only()
 {
-    if (!vault_)
+    if (!session_)
     {
         ui_.show_error("Vault not unlocked");
         return;
     }
 
-    auto password = ui_.prompt_master_password();
     ui_.display_loading();
-    auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
+    auto result = session_->save();
     ui_.wipe_loading();
     if (!result)
     {
@@ -333,15 +333,14 @@ void Application::handle_save_only()
 
 void Application::handle_save_and_close()
 {
-    if (!vault_)
+    if (!session_)
     {
         ui_.show_error("Vault not unlocked");
         return;
     }
 
-    auto password = ui_.prompt_master_password();
     ui_.display_loading();
-    auto result = vault::VaultFile::save(vault_path_, *vault_, std::move(password.value()));
+    auto result = session_->save();
     ui_.wipe_loading();
     if (!result)
     {
@@ -349,7 +348,7 @@ void Application::handle_save_and_close()
         return;
     }
 
-    vault_.reset();
+    session_.reset();
     ui_.show_message("Vault Saved and Closed");
 }
 
@@ -357,9 +356,8 @@ void Application::handle_quit()
 {
     ui_.show_message("Quitting");
 
-    vault_.reset();
+    session_.reset();
     running_ = false;
 }
-
 
 }
