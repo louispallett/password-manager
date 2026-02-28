@@ -72,9 +72,6 @@ void Application::handle_action(Action action)
         case Action::AddEntry:
             handle_add_entry();
             break;
-        case Action::AlterEntry:
-            handle_alter_entry();
-            break;
         case Action::RemoveEntry:
             handle_remove_entry();
             break;
@@ -230,44 +227,6 @@ void Application::handle_add_entry()
     }
 
     ui_.show_message("Entry added successfully");
-}
-
-void Application::handle_alter_entry()
-{
-    // if (!vault_)
-    // {
-    //     ui_.show_error("Vault not unlocked");
-    //     return;
-    // }
-    //
-    // auto index = ui_.select_entry(vault_->entries());
-    // if (!index)
-    // {
-    //     return;
-    // }
-    //
-    // auto name = ui_.prompt_input("Name");
-    // auto username = ui_.prompt_input("Username");
-    // auto password = ui_.prompt_input("Password");
-    // if (!name || !username || !password)
-    // {
-    //     return;
-    // }
-    //
-    // vault::Entry new_entry {
-    //     std::move(name.value()), 
-    //     std::move(username.value()), 
-    //     std::move(password.value())
-    // };
-    //
-    // auto result = vault_->update_entry(*index, std::move(new_entry));
-    // if (!result)
-    // {
-    //     ui_.show_error(vault::to_string(result.error()));
-    //     return;
-    // }
-    //
-    // ui_.show_message("Entry updated successfully");
 }
 
 void Application::handle_remove_entry()

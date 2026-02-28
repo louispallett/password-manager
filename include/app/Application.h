@@ -30,7 +30,6 @@ private:
     void handle_create_vault();
     void handle_unlock();
     void handle_add_entry();
-    void handle_alter_entry();
     void handle_remove_entry();
     void handle_list_entries();
     void handle_save_only();
