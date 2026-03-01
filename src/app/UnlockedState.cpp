@@ -29,7 +29,6 @@ bool UnlockedState::allows (Action action) const noexcept
     {
         case Action::ListEntries:
         case Action::AddEntry:
-        case Action::AlterEntry:
         case Action::RemoveEntry:
         case Action::Save:
         case Action::SaveAndClose:

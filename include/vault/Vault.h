@@ -3,9 +3,10 @@
 #include <vector>
 #include "crypto/CryptoTypes.h"
 #include "util/Expected.h"
-#include "vault/Entry.h"
-#include "vault/VaultError.h"
-#include "vault/VaultFileError.h"
+
+namespace vault { class Entry; }
+namespace vault { enum class VaultError; }
+namespace vault { enum class VaultFileError; }
 
 namespace vault 
 {
@@ -25,9 +26,7 @@ class Vault
             Entry updated
         );
 
-        util::Expected<void, VaultError> remove_entry (
-            size_t index
-        );
+        util::Expected<void, VaultError> remove_entry (size_t index);
 
         crypto::ByteBuffer serialise() const;
 

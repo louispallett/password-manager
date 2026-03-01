@@ -9,7 +9,6 @@ enum class Action
     CreateVault,
 	Unlock,
 	AddEntry,
-    AlterEntry,
 	RemoveEntry,
 	ListEntries,
     Save,

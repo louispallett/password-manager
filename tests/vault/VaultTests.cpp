@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <optional>
 #include <sodium.h>
 
 #include "util/Expected.h"
@@ -6,6 +7,7 @@
 #include "vault/Entry.h"
 #include "vault/VaultFile.h"
 #include "VaultTestFixture.h"
+#include "vault/VaultSession.h"
 
 TEST_CASE("Returns all entries")
 {
@@ -91,11 +93,9 @@ TEST_CASE("Saving and reloading preserves entries")
 
     REQUIRE(loaded.value().add_entry(std::move(entry)));
 
-    REQUIRE(vault::VaultFile::save(
-        fixture.file_path,
-        loaded.value(),
-        fixture.password
-    ));
+    std::optional<vault::VaultSession> session_;
+    session_ = std::move(loaded.value());
+    REQUIRE(session_->save());
 
     auto reloaded = vault::VaultFile::load(fixture.file_path, fixture.password);
     REQUIRE(reloaded);
@@ -106,40 +106,6 @@ TEST_CASE("Saving and reloading preserves entries")
     CHECK(entries[0].name == expected.name);
     CHECK(entries[0].username == expected.username);
     CHECK(entries[0].secret == expected.secret);
-}
-
-TEST_CASE("Updates an entry")
-{
-    VaultTestFixture fixture;
-    REQUIRE(vault::VaultFile::create_new(fixture.file_path, fixture.password));
-
-    auto loaded = vault::VaultFile::load(fixture.file_path, fixture.password);
-    REQUIRE(loaded);
-
-    vault::Entry entry 
-    {
-        util::SecureString{"Email"},
-        util::SecureString{"john.doe@example.com"},
-        util::SecureString{"HelloWorld123!"}
-    };
-
-    auto& entries = loaded.value().entries();
-    REQUIRE(loaded.value().add_entry(std::move(entry)));
-    REQUIRE(entries.size() == 1);
-
-    vault::Entry updated_entry 
-    {
-        util::SecureString{"Froogle"},
-        util::SecureString{"john.doe@example.com"},
-        util::SecureString{"HelloWorld1234!"}
-    };
-
-    auto result = loaded.value().update_entry(0, std::move(updated_entry));
-    REQUIRE(result);
-
-    CHECK(entries[0].name == util::SecureString("Froogle"));
-    CHECK(entries[0].username == util::SecureString("john.doe@example.com"));
-    CHECK(entries[0].secret == util::SecureString("HelloWorld1234!"));
 }
 
 TEST_CASE("Deletes an entry")

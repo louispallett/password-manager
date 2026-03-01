@@ -8,6 +8,7 @@
 #include "vault/VaultFile.h"
 #include "vault/VaultFileError.h"
 #include "VaultTestFixture.h"
+#include "vault/VaultSession.h"
 
 TEST_CASE("Creating a new vault succeeds")
 {
