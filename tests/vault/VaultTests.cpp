@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include <optional>
 #include <sodium.h>
 
 #include "util/Expected.h"
@@ -6,6 +7,7 @@
 #include "vault/Entry.h"
 #include "vault/VaultFile.h"
 #include "VaultTestFixture.h"
+#include "vault/VaultSession.h"
 
 TEST_CASE("Returns all entries")
 {
@@ -91,11 +93,9 @@ TEST_CASE("Saving and reloading preserves entries")
 
     REQUIRE(loaded.value().add_entry(std::move(entry)));
 
-    REQUIRE(vault::VaultFile::save(
-        fixture.file_path,
-        loaded.value(),
-        fixture.password
-    ));
+    std::optional<vault::VaultSession> session_;
+    session_ = std::move(loaded.value());
+    REQUIRE(session_->save());
 
     auto reloaded = vault::VaultFile::load(fixture.file_path, fixture.password);
     REQUIRE(reloaded);
