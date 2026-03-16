@@ -70,21 +70,6 @@ util::Expected<void, VaultError> Vault::add_entry (Entry entry)
     return {};
 }
 
-util::Expected<void, VaultError> Vault::update_entry(
-    size_t index,
-    Entry updated
-)
-{
-    if (index >= entries_.size())
-    {
-        return VaultError::EntryNotFound;
-    }
-
-    entries_[index] = std::move(updated);
-
-    return {};
-}
-
 util::Expected<void, VaultError> Vault::remove_entry(
     size_t index
 )
