@@ -1,4 +1,5 @@
 #include "vault/Vault.h"
+#include "crypto/CryptoContext.h"
 #include "crypto/CryptoTypes.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
@@ -153,6 +154,17 @@ util::Expected<Vault, VaultFileError> Vault::deserialise(
     }
 
     return vault;
+}
+
+void Vault::secure_clear ()
+{
+    for (auto& entry : entries_)
+    {
+        crypto::CryptoContext::secure_zero(entry.name);
+        crypto::CryptoContext::secure_zero(entry.username);
+        crypto::CryptoContext::secure_zero(entry.secret);
+    }
+    entries_.clear();
 }
 
 }

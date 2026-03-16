@@ -24,6 +24,7 @@ class SecureString {
 
         // Access as bytes (KDF input)
         const std::uint8_t* data() const noexcept;
+        std::uint8_t* data() noexcept;
         std::size_t size() const noexcept;
         bool operator==(const SecureString& other) const noexcept
         {

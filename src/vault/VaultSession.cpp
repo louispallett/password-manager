@@ -11,6 +11,7 @@ namespace vault
 
 VaultSession::~VaultSession()
 {
+    vault_.secure_clear();
     crypto::CryptoContext::secure_zero(key_);
 }
 

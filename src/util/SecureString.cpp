@@ -72,6 +72,11 @@ const std::uint8_t* SecureString::data() const noexcept
     return buffer_.data();
 }
 
+std::uint8_t* SecureString::data() noexcept
+{
+    return buffer_.data();
+}
+
 std::size_t SecureString::size() const noexcept
 {
     return buffer_.empty() ? 0 : buffer_.size() - 1;
