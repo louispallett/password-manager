@@ -24,17 +24,17 @@ public:
     void change_state(std::unique_ptr<State> new_state);
     
 private:
-    void handle_action(Action action);
+    bool handle_action(Action action);
     void transition_state(Action action);
 
-    void handle_create_vault();
-    void handle_unlock();
-    void handle_add_entry();
-    void handle_remove_entry();
-    void handle_list_entries();
-    void handle_save_only();
-    void handle_save_and_close();
-    void handle_quit();
+    bool handle_create_vault();
+    bool handle_unlock();
+    bool handle_add_entry();
+    bool handle_remove_entry();
+    bool handle_list_entries();
+    bool handle_save_only();
+    bool handle_save_and_close();
+    bool handle_quit();
 
 private:
     std::string vault_path_;
