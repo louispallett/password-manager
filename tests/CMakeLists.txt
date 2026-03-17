@@ -3,6 +3,7 @@ add_executable(vault_tests
     crypto/CryptoContextTests.cpp
     vault/VaultFileTests.cpp
     vault/VaultTests.cpp
+    vault/VaultSessionTests.cpp
     app/StateTest.cpp
 )
 
