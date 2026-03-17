@@ -34,6 +34,8 @@ class Vault
             const crypto::ByteBuffer& data
         );
 
+        void secure_clear();
+
     private:
         std::vector<Entry> entries_;
 };
