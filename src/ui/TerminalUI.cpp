@@ -316,11 +316,11 @@ app::Action TerminalUI::prompt_action(
     {
         int ch = wgetch(menu_win);
 
-        if (ch == KEY_UP && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
         {
             --selected;
         }
-        else if (ch == KEY_DOWN &&
+        else if ((ch == KEY_DOWN || ch == 'j') &&
                  selected < static_cast<int>(options.size()) - 1)
         {
             ++selected;
@@ -453,11 +453,11 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     {
         int ch = wgetch(menu);
 
-        if (ch == KEY_UP && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
         {
             --selected;
         }
-        else if (ch == KEY_DOWN &&
+        else if ((ch == KEY_DOWN || ch == 'j') &&
                  selected < static_cast<int>(options.size()) - 1)
         {
             ++selected;
@@ -619,11 +619,11 @@ bool check_remove_entry(int dyn_content_start_row_, int message_content_height_)
   {
       int ch = wgetch(menu);
 
-      if (ch == KEY_UP && selected > 0)
+      if ((ch == KEY_UP || ch == 'k') && selected > 0)
       {
           --selected;
       }
-      else if (ch == KEY_DOWN &&
+      else if ((ch == KEY_DOWN || ch == 'j') &&
                selected < static_cast<int>(options.size()) - 1)
       {
           ++selected;
@@ -713,13 +713,13 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
     {
         int ch = wgetch(pad);
 
-        if (ch == KEY_UP && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
         {
             --selected;
             if (selected < pad_scroll)
                 --pad_scroll;
         }
-        else if (ch == KEY_DOWN && selected < num_entries - 1)
+        else if ((ch == KEY_DOWN || ch == 'j') && selected < num_entries - 1)
         {
             ++selected;
             if (selected >= pad_scroll + viewport_height)
@@ -833,13 +833,13 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     {
         int ch = wgetch(pad);
 
-        if (ch == KEY_UP && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
         {
             --selected;
             if (selected < pad_scroll)
                 --pad_scroll;
         }
-        else if (ch == KEY_DOWN && selected < num_entries - 1)
+        else if ((ch == KEY_DOWN || ch == 'j') && selected < num_entries - 1)
         {
             ++selected;
             if (selected >= pad_scroll + viewport_height)
@@ -1038,11 +1038,11 @@ bool TerminalUI::generate_password()
     {
         int ch = wgetch(menu);
 
-        if (ch == KEY_UP && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
         {
             --selected;
         }
-        else if (ch == KEY_DOWN &&
+        else if ((ch == KEY_DOWN || ch == 'j') &&
                  selected < static_cast<int>(options.size()) - 1)
         {
             ++selected;
