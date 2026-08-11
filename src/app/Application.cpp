@@ -61,7 +61,7 @@ void Application::run(Application& app)
 
 bool Application::handle_action(Action action)
 {
-        bool result = false;
+    bool result = false;
     switch (action) 
     {
         case Action::CreateVault:
