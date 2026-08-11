@@ -151,7 +151,7 @@ void TerminalUI::display_loading()
     std::lock_guard<std::mutex> lock(loading_mutex);
     if (loading_active)
     {
-        // wipe_loading();
+        wipe_loading();
         return;
     }
 
