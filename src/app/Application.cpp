@@ -85,6 +85,8 @@ bool Application::handle_action(Action action)
         case Action::SaveAndClose:
             result = handle_save_and_close();
             break;
+        case Action::Help:
+            result = handle_help();
         case Action::Quit:
             result = handle_quit();
         default:
@@ -317,6 +319,12 @@ bool Application::handle_save_and_close()
 
     session_.reset();
     ui_.show_message("Vault Saved and Closed");
+    return true;
+}
+
+bool Application::handle_help() 
+{
+    ui_.list_help_menu();
     return true;
 }
 

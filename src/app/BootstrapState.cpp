@@ -12,8 +12,8 @@ std::vector<MenuOption> BootstrapState::menu_options () const
 {
     return 
     {
-        { Action::CreateVault, "Create Vault" },
-        { Action::Quit, "Quit" }
+        { Action::CreateVault, "CREATE VAULT" },
+        { Action::Quit, "QUIT" }
     };
 }
 

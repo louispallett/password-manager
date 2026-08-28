@@ -6,12 +6,13 @@ namespace app
 enum class Action
 {
 	None,
-    CreateVault,
+  CreateVault,
 	Unlock,
 	AddEntry,
 	RemoveEntry,
 	ListEntries,
-    Save,
+  Help,
+  Save,
 	SaveAndClose,
 	Quit
 };

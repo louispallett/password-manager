@@ -867,6 +867,10 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     delwin(pad);
 }
 
+void TerminalUI::list_help_menu() 
+{
+}
+
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_password ()
 {
     const int win_height = message_content_height_;

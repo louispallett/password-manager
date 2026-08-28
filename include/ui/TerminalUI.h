@@ -50,6 +50,7 @@ public:
     bool generate_password();
     void display_entry(const vault::Entry& entry);
     util::Expected<size_t, char> remove_entry (const std::vector<vault::Entry>& entries);
+    void list_help_menu();
 
 private:
     void shutdown();
