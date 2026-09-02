@@ -1,5 +1,6 @@
 #include "ui/TerminalUI.h"
 #include "app/Action.h"
+#include "app/Help.h"
 #include "app/State.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
@@ -761,70 +762,102 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
 {
     if (entries.empty()) return;
 
-    const int num_entries = static_cast<int>(entries.size()) + 1;
+    std::vector<std::string> labels;
+    labels.reserve(entries.size());
+    for (const auto& e : entries)
+        labels.emplace_back(reinterpret_cast<const char*>(e.name.data()), e.name.size());
+
+    run_pad_menu("Entries", labels, [&](int idx)
+    {
+        display_entry(entries[idx]);
+    });
+}
+
+std::vector<std::string> TerminalUI::wrap_text(const std::string& text, int width)
+{
+    std::vector<std::string> lines;
+
+    // Split into paragraphs on literal newlines first, so paragraph
+    // breaks survive the word-wrapping pass below.
+    std::vector<std::string> paragraphs;
+    std::string paragraph;
+    std::istringstream stream(text);
+    while (std::getline(stream, paragraph, '\n'))
+    {
+        paragraphs.push_back(paragraph);
+    }
+
+    for (size_t p = 0; p < paragraphs.size(); ++p)
+    {
+        std::istringstream words(paragraphs[p]);
+        std::string word;
+        std::string current;
+
+        while (words >> word)
+        {
+            if (current.empty())
+            {
+                current = word;
+            }
+            else if (static_cast<int>(current.size() + 1 + word.size()) <= width)
+            {
+                current += ' ';
+                current += word;
+            }
+            else
+            {
+                lines.push_back(current);
+                current = word;
+            }
+        }
+        if (!current.empty()) lines.push_back(current);
+        else if (paragraphs[p].empty()) lines.push_back(""); 
+
+        if (p + 1 < paragraphs.size()) lines.push_back("");
+    }
+
+    if (lines.empty()) lines.push_back("");
+
+    return lines;
+}
+
+void TerminalUI::display_help_topic(const app::HelpTopic& topic)
+{
     const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
-    const int viewport_left = COLS / 3;
+    const int viewport_left = COLS / 3 * 2;
     const int viewport_bottom = LINES - 1;
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
+    const int win_width = COLS / 3;
 
-    WINDOW* pad = newpad(num_entries + 2, COLS / 3);
-    if (!pad) 
-    {
-        return;
-    }
+    const int text_width = win_width - 4; 
+    std::vector<std::string> lines = wrap_text(topic.description, text_width);
 
-    keypad(pad, TRUE); 
+    const int num_lines = static_cast<int>(lines.size());
+    const int pad_height = num_lines + 4; 
 
-    int selected   = 0; 
-    int pad_scroll = 0; 
+    WINDOW* pad = newpad(pad_height, win_width);
+    if (!pad) return;
+    show_message("Use arrow keys to scroll. Press ENTER to go back");
+
+    keypad(pad, TRUE);
+
+    int scroll = 0;
+    const int max_scroll = std::max(0, pad_height - viewport_height);
 
     auto render = [&]()
     {
         werase(pad);
         box(pad, 0, 0);
-        for (int i = 0; i < num_entries; ++i)
+        mvwprintw(pad, 0, 2, "%s", topic.title.c_str());
+
+        for (int i = 0; i < num_lines; ++i)
         {
-            if (i < entries.size())
-            {
-                const auto& name = entries[i].name;
-                const char* name_str = reinterpret_cast<const char*>(name.data());
-                const int   name_len = static_cast<int>(name.size());
-
-                if (i == selected)
-                {
-                    wattron(pad, A_REVERSE); 
-                    
-                    mvwhline(pad, i + 1, 1, ' ', COLS/3 - 2);
-                    mvwprintw(pad, i + 1, 2, "%s", entries[i].name.c_str());
-                    
-                    wattroff(pad, A_REVERSE);
-                }
-                else 
-                {
-                  mvwprintw(pad, i + 1, 1, "%s", entries[i].name.c_str());
-                }
-            }
-            else 
-            {
-                if (i == selected)
-                {
-                    wattron(pad, A_REVERSE);
-                }
-
-                mvwhline(pad, i + 1, 1, ' ', COLS/3 - 2);
-                mvwprintw(pad, i + 1, COLS/6 - 2, "BACK");
-
-                if (i == selected)
-                {
-                    wattroff(pad, A_REVERSE);
-                }
-            }
+            mvwprintw(pad, i + 2, 2, "%s", lines[i].c_str());
         }
 
-        mvwprintw(pad, 0, 1, "%s", "Entries");
-        prefresh(pad, pad_scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
+        prefresh(pad, scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
     };
 
     render();
@@ -833,38 +866,38 @@ void TerminalUI::list_entries(const std::vector<vault::Entry>& entries)
     {
         int ch = wgetch(pad);
 
-        if ((ch == KEY_UP || ch == 'k') && selected > 0)
+        if ((ch == KEY_UP || ch == 'k') && scroll > 0)
         {
-            --selected;
-            if (selected < pad_scroll)
-                --pad_scroll;
+            --scroll;
         }
-        else if ((ch == KEY_DOWN || ch == 'j') && selected < num_entries - 1)
+        else if ((ch == KEY_DOWN || ch == 'j') && scroll < max_scroll)
         {
-            ++selected;
-            if (selected >= pad_scroll + viewport_height)
-                ++pad_scroll;
+            ++scroll;
         }
         else if (ch == '\n' || ch == KEY_ENTER)
         {
-            if (selected == num_entries - 1)
-            {
-                werase(pad);
-                wrefresh(pad);
-                delwin(pad);
-                return;
-            }
-            else
-            {
-                // List specific entry
-                display_entry(entries[selected]);
-            }
+            werase(pad);
+            wrefresh(pad);
+            delwin(pad);
+            return;
         }
 
         render();
     }
+}
 
-    delwin(pad);
+void TerminalUI::list_help_menu()
+{
+    const auto& topics = app::help_topics();
+
+    std::vector<std::string> labels;
+    labels.reserve(topics.size());
+    for (const auto& t : topics) labels.push_back(t.title);
+
+    run_pad_menu("Help", labels, [&](int idx)
+    {
+        display_help_topic(topics[idx]);
+    });
 }
 
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_password ()
@@ -1071,6 +1104,90 @@ bool TerminalUI::generate_password()
   delwin(question);
   delwin(menu);
   return false;
+}
+
+void TerminalUI::run_pad_menu(const std::string& title, const std::vector<std::string>& labels, const std::function<void(int)>& on_select)
+{
+    if (labels.empty()) return;
+
+    const int num_rows = static_cast<int>(labels.size()) + 1;
+    const int content_start = dyn_content_start_row_;
+    const int viewport_top = content_start;
+    const int viewport_left = COLS / 3;
+    const int viewport_bottom = LINES - 1;
+    const int viewport_right = COLS - 1;
+    const int viewport_height = viewport_bottom - viewport_top + 1;
+
+    WINDOW* pad = newpad(num_rows + 2, viewport_left);
+    if (!pad) return;
+    keypad(pad, TRUE);
+
+    int selected   = 0;
+    int pad_scroll = 0;
+
+    auto render = [&]()
+    {
+        werase(pad);
+        box(pad, 0, 0);
+        for (int i = 0; i < num_rows; ++i)
+        {
+            const bool is_back = (i == static_cast<int>(labels.size()));
+            const std::string text = is_back ? "BACK" : labels[i];
+	    const int text_col = (i == selected) ? 2 : 1;
+
+            if (i == selected) wattron(pad, A_REVERSE);
+            mvwhline(pad, i + 1, 1, ' ', viewport_left - 2);
+            if (is_back)
+                mvwprintw(pad, i + 1, COLS / 6 - 2, "%s", text.c_str());
+            else
+                mvwprintw(pad, i + 1, text_col, "%s", text.c_str());
+            if (i == selected) wattroff(pad, A_REVERSE);
+        }
+
+        mvwprintw(pad, 0, 2, "%s", title.c_str());
+        prefresh(pad, pad_scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
+    };
+
+    render();
+
+    while (true)
+    {
+        int ch = wgetch(pad);
+
+        if ((ch == KEY_UP || ch == 'k') && selected > 0)
+        {
+            --selected;
+            if (selected < pad_scroll) --pad_scroll;
+        }
+        else if ((ch == KEY_UP || ch == 'k') && selected == 0)
+        {
+            selected = num_rows - 1;
+            pad_scroll = std::max(0, num_rows - viewport_height);
+        }
+        else if ((ch == KEY_DOWN || ch == 'j') && selected < num_rows - 1)
+        {
+            ++selected;
+            if (selected >= pad_scroll + viewport_height) ++pad_scroll;
+        }
+        else if ((ch == KEY_DOWN || ch == 'j') && selected == num_rows - 1)
+        {
+            selected = 0;
+            pad_scroll = 0;
+        }
+        else if (ch == '\n' || ch == KEY_ENTER)
+        {
+            if (selected == num_rows - 1)
+            {
+                werase(pad);
+                wrefresh(pad);
+                delwin(pad);
+                return;
+            }
+            on_select(selected);
+        }
+
+        render();
+    }
 }
 
 void TerminalUI::shutdown()

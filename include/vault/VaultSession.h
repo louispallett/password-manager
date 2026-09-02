@@ -6,6 +6,7 @@
 #include <utility>
 #include "vault/Vault.h"
 #include "vault/Entry.h"
+#include "vault/HelpOption.h"
 
 namespace vault { enum class VaultError; }
 namespace vault { enum class VaultFileError; }
@@ -37,6 +38,7 @@ class VaultSession
         // vault::Vault functions
         bool is_empty() const;
         const std::vector<Entry>& entries () const noexcept;
+        const std::vector<HelpOption>& helpOptions () const noexcept;
         util::Expected<void, VaultError> add_entry (Entry entry);
         util::Expected<void, VaultError> remove_entry (size_t index);
 

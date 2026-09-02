@@ -13,6 +13,7 @@ std::vector<MenuOption> UnlockedState::menu_options () const
         { Action::AddEntry, "ADD NEW ENTRY" },
         { Action::ListEntries, "LIST ENTRIES" },
         { Action::RemoveEntry, "REMOVE ENTRY" },
+        { Action::Help, "HELP" },
         { Action::Save, "SAVE" },
         { Action::SaveAndClose, "SAVE AND CLOSE VAULT" }
     };
@@ -32,6 +33,7 @@ bool UnlockedState::allows (Action action) const noexcept
         case Action::RemoveEntry:
         case Action::Save:
         case Action::SaveAndClose:
+        case Action::Help:
             return true;
         default:
             return false;
