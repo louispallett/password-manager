@@ -30,10 +30,8 @@ util::Expected<ByteBuffer, CryptoError> VaultCrypto::derive_key (
         reinterpret_cast<const char*>(password.data()),  // password
         password.size(),                      // password length
         salt.data(),                          // salt
-        // crypto_pwhash_OPSLIMIT_SENSITIVE,     // computational cost
-        // crypto_pwhash_MEMLIMIT_SENSITIVE,     // memory cost
-        crypto_pwhash_OPSLIMIT_MODERATE,
-        crypto_pwhash_MEMLIMIT_MODERATE,
+        crypto_pwhash_OPSLIMIT_SENSITIVE,     // computational cost
+        crypto_pwhash_MEMLIMIT_SENSITIVE,     // memory cost
         crypto_pwhash_ALG_ARGON2ID13          // algorithm (Argon2id v1.3)
     );
     
