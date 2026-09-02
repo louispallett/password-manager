@@ -13,6 +13,7 @@ std::vector<MenuOption> BootstrapState::menu_options () const
     return 
     {
         { Action::CreateVault, "CREATE VAULT" },
+	{ Action::Help, "HELP" },
         { Action::Quit, "QUIT" }
     };
 }
@@ -31,6 +32,7 @@ bool BootstrapState::allows (Action action) const noexcept
     switch (action)
     {
         case Action::CreateVault:
+	case Action::Help:
         case Action::Quit:
             return true;
         default:

@@ -11,8 +11,9 @@ std::vector<MenuOption> LockedState::menu_options () const
 {
     return 
     {
-        { Action::Unlock, "Unlock Vault" },
-        { Action::Quit, "Quit" }
+        { Action::Unlock, "UNLOCK VAULT" }, 
+	{ Action::Help, "HELP" },
+        { Action::Quit, "QUIT" }
     };
 }
 
@@ -26,6 +27,7 @@ bool LockedState::allows (Action action) const noexcept
     switch (action) 
     {
         case Action::Unlock:
+	case Action::Help:
         case Action::Quit:
             return true;
         default:

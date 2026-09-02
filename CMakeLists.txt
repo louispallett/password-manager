@@ -25,6 +25,7 @@ add_library(vault_lib
     src/app/UnlockedState.cpp
     src/app/ShutdownState.cpp
     src/app/Application.cpp
+    src/app/Help.cpp
     src/ui/TerminalUI.cpp
 )
 

@@ -6,7 +6,7 @@ namespace app
 enum class HelpMenuOption
 {
     None,
-    HowItWorks,
+    Overview,
     Vault,
     MasterPassword,
     AddEntry,

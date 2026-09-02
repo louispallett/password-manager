@@ -87,8 +87,10 @@ bool Application::handle_action(Action action)
             break;
         case Action::Help:
             result = handle_help();
+	    break;
         case Action::Quit:
             result = handle_quit();
+	    break;
         default:
             break;
     }

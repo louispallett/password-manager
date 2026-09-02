@@ -3,10 +3,12 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <functional>
 #include <string>
 
 #include "app/Action.h"
 #include "app/State.h"
+#include "app/Help.h"
 #include "vault/Entry.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
@@ -60,6 +62,9 @@ private:
     std::atomic<bool> loading_active{false};
     std::thread loading_thread;
     std::mutex loading_mutex; int prompt_input_height_ = 5;
+    void run_pad_menu(const std::string& title, const std::vector<std::string>& labels, const std::function<void(int)>& on_select);
+    std::vector<std::string> wrap_text(const std::string& text, int width);
+    void display_help_topic(const app::HelpTopic& topic);
 };
 
 }

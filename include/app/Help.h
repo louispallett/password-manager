@@ -1,20 +1,18 @@
+#pragma once
 #include "app/HelpMenuOption.h"
 #include <string>
 #include <vector>
 
-namespace app 
+namespace app
 {
 
-struct HelpMenu
+struct HelpTopic
 {
-    HelpMenuOption option;
-    std::string label;
+    HelpMenuOption id;
+    std::string    title;
+    std::string    description;
 };
 
-class Help final 
-{
-    public:
-        std::vector<HelpMenu> help_menu_options() const;
-};
+const std::vector<HelpTopic>& help_topics();
 
 }
