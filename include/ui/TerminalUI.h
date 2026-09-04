@@ -7,6 +7,7 @@
 #include <string>
 
 #include "app/Action.h"
+#include "app/FAQs.h"
 #include "app/State.h"
 #include "app/Help.h"
 #include "vault/Entry.h"
@@ -53,6 +54,7 @@ public:
     void display_entry(const vault::Entry& entry);
     util::Expected<size_t, char> remove_entry (const std::vector<vault::Entry>& entries);
     void list_help_menu();
+    void list_FAQ_menu();
 
 private:
     void shutdown();
@@ -65,6 +67,7 @@ private:
     void run_pad_menu(const std::string& title, const std::vector<std::string>& labels, const std::function<void(int)>& on_select);
     std::vector<std::string> wrap_text(const std::string& text, int width);
     void display_help_topic(const app::HelpTopic& topic);
+    void display_FAQ_topic(const app::FAQTopic& topic);
 };
 
 }
