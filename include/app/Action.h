@@ -12,6 +12,7 @@ enum class Action
 	RemoveEntry,
 	ListEntries,
   Help,
+  FAQs,
   Save,
 	SaveAndClose,
 	Quit

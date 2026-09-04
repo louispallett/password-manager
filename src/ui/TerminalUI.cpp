@@ -1,6 +1,7 @@
 #include "ui/TerminalUI.h"
 #include "app/Action.h"
 #include "app/Help.h"
+#include "app/FAQs.h"
 #include "app/State.h"
 #include "util/Expected.h"
 #include "util/SecureString.h"
@@ -839,7 +840,7 @@ void TerminalUI::display_help_topic(const app::HelpTopic& topic)
 
     WINDOW* pad = newpad(pad_height, win_width);
     if (!pad) return;
-    show_message("Use arrow keys to scroll. Press ENTER to go back");
+    show_message("Use arrow keys to scroll. Press ENTER or q to go back");
 
     keypad(pad, TRUE);
 
@@ -851,11 +852,16 @@ void TerminalUI::display_help_topic(const app::HelpTopic& topic)
         werase(pad);
         box(pad, 0, 0);
         mvwprintw(pad, 0, 2, "%s", topic.title.c_str());
+        
+        int i = 0;
 
-        for (int i = 0; i < num_lines; ++i)
+        while (i < num_lines)
         {
             mvwprintw(pad, i + 2, 2, "%s", lines[i].c_str());
+            ++i;
         }
+
+        mvwprintw(pad, i + 2, 2, "%s", "Press ENTER or q to go back.");
 
         prefresh(pad, scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
     };
@@ -874,10 +880,82 @@ void TerminalUI::display_help_topic(const app::HelpTopic& topic)
         {
             ++scroll;
         }
-        else if (ch == '\n' || ch == KEY_ENTER)
+        else if (ch == '\n' || ch == KEY_ENTER || ch == 'q')
         {
             werase(pad);
             wrefresh(pad);
+            show_message("Use arrow or VI keys to navigate");
+            delwin(pad);
+            return;
+        }
+
+        render();
+    }
+}
+
+void TerminalUI::display_FAQ_topic(const app::FAQTopic& topic) 
+{
+    const int content_start = dyn_content_start_row_;
+    const int viewport_top = content_start;
+    const int viewport_left = COLS / 3 * 2;
+    const int viewport_bottom = LINES - 1;
+    const int viewport_right = COLS - 1;
+    const int viewport_height = viewport_bottom - viewport_top + 1;
+    const int win_width = COLS / 3;
+
+    const int text_width = win_width - 4; 
+    std::vector<std::string> lines = wrap_text(topic.description, text_width);
+
+    const int num_lines = static_cast<int>(lines.size());
+    const int pad_height = num_lines + 4; 
+
+    WINDOW* pad = newpad(pad_height, win_width);
+    if (!pad) return;
+    show_message("Use arrow keys to scroll. Press ENTER or q to go back");
+
+    keypad(pad, TRUE);
+
+    int scroll = 0;
+    const int max_scroll = std::max(0, pad_height - viewport_height);
+
+    auto render = [&]()
+    {
+        werase(pad);
+        box(pad, 0, 0);
+        mvwprintw(pad, 0, 2, "%s", topic.title.c_str());
+
+        int i = 0;
+
+        while (i < num_lines)
+        {
+            mvwprintw(pad, i + 2, 2, "%s", lines[i].c_str());
+            ++i;
+        }
+
+        mvwprintw(pad, i + 2, 2, "%s", "Press ENTER or q to go back.");
+
+        prefresh(pad, scroll, 0, viewport_top, viewport_left, viewport_bottom, viewport_right);
+    };
+
+    render();
+
+    while (true)
+    {
+        int ch = wgetch(pad);
+
+        if ((ch == KEY_UP || ch == 'k') && scroll > 0)
+        {
+            --scroll;
+        }
+        else if ((ch == KEY_DOWN || ch == 'j') && scroll < max_scroll)
+        {
+            ++scroll;
+        }
+        else if (ch == '\n' || ch == KEY_ENTER || ch == 'q')
+        {
+            werase(pad);
+            wrefresh(pad);
+            show_message("Use arrow or VI keys to navigate");
             delwin(pad);
             return;
         }
@@ -894,9 +972,25 @@ void TerminalUI::list_help_menu()
     labels.reserve(topics.size());
     for (const auto& t : topics) labels.push_back(t.title);
 
-    run_pad_menu("Help", labels, [&](int idx)
+    run_pad_menu("Help", labels, [&](int index)
     {
-        display_help_topic(topics[idx]);
+        display_help_topic(topics[index]);
+    });
+
+    show_message("Use arrow or VI keys to navigate");
+}
+
+void TerminalUI::list_FAQ_menu()
+{
+    const auto& topics = app::FAQ_topics();
+
+    std::vector<std::string> labels;
+    labels.reserve(topics.size());
+    for (const auto& topic : topics) labels.push_back(topic.title);
+
+    run_pad_menu("FAQs", labels, [&](int index)
+    {
+        display_FAQ_topic(topics[index]);
     });
 }
 

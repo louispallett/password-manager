@@ -26,6 +26,7 @@ add_library(vault_lib
     src/app/ShutdownState.cpp
     src/app/Application.cpp
     src/app/Help.cpp
+    src/app/FAQs.cpp
     src/ui/TerminalUI.cpp
 )
 

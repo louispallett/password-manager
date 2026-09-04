@@ -33,6 +33,7 @@ private:
     bool handle_remove_entry();
     bool handle_list_entries();
     bool handle_help();
+    bool handle_FAQs();
     bool handle_save_only();
     bool handle_save_and_close();
     bool handle_quit();

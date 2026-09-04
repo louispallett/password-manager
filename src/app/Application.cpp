@@ -39,7 +39,7 @@ void Application::run(Application& app)
     }
     else 
     {
-        ui_.show_message("No vault found. Please create a vault to continue");
+        ui_.show_message("No vault found. Please select HELP and read OVERVIEW. Then, create a vault to continue");
     }
 
     while (running_)
@@ -87,7 +87,10 @@ bool Application::handle_action(Action action)
             break;
         case Action::Help:
             result = handle_help();
-	    break;
+	          break;
+        case Action::FAQs:
+            result = handle_FAQs();
+            break;
         case Action::Quit:
             result = handle_quit();
 	    break;
@@ -327,6 +330,12 @@ bool Application::handle_save_and_close()
 bool Application::handle_help() 
 {
     ui_.list_help_menu();
+    return true;
+}
+
+bool Application::handle_FAQs()
+{
+    ui_.list_FAQ_menu();
     return true;
 }
 
