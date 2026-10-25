@@ -85,7 +85,7 @@ void TerminalUI::display_logo()
         mvprintw(3, 1, "Licensed under Apache-2.0");
         mvprintw(4, 1, "Unlock or create your vault");
 
-        m_content_start_row_ = 6;
+        m_content_start_row_ = 2;
         dyn_content_start_row_ = m_content_start_row_ + message_content_height_ * 3;
         
         refresh();
