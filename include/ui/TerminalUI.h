@@ -1,10 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
+#include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
-#include <functional>
-#include <string>
 
 #include "app/Action.h"
 #include "app/FAQs.h"
