@@ -74,6 +74,23 @@ void display_flag(std::vector<std::string> logo)
 
 void TerminalUI::display_logo()
 {
+    if (is_compact_layout()) 
+    {
+        attron(A_BOLD | COLOR_PAIR(5));
+        mvprintw(0, 1, "Terminally Locked");
+        mvprintw(1, 1, "Password Manager");
+
+        attroff(A_BOLD | COLOR_PAIR(5));
+
+        mvprintw(3, 1, "Licensed under Apache-2.0");
+        mvprintw(4, 1, "Unlock or create your vault");
+
+        m_content_start_row_ = 6;
+        dyn_content_start_row_ = m_content_start_row_ + message_content_height_ * 3;
+        
+        refresh();
+        return;
+    }
     const std::vector<std::string> logo = {
         " _________  _______   ________  _____ ______   ___  ________   ________  ___       ___           ___    ___ ", 
         "|\\___   ___\\\\  ___ \\ |\\   __  \\|\\   _ \\  _   \\|\\  \\|\\   ___  \\|\\   __  \\|\\  \\     |\\  \\         |\\  \\  /  /|",
@@ -253,8 +270,12 @@ app::Action TerminalUI::prompt_action(
         return app::Action::None;
     }
 
+    const bool compact = is_compact_layout();
+
     const int win_height = options.size() + 5;
-    const int win_width  = COLS / 3;
+    const int win_width  = compact 
+        ? COLS 
+        : COLS / 3;
 
     WINDOW* menu_win = newwin(win_height, win_width, dyn_content_start_row_, 0);
     if (!menu_win)
@@ -346,33 +367,40 @@ app::Action TerminalUI::prompt_action(
 
 void TerminalUI::display_entry(const vault::Entry& entry)
 {
+    const bool compact = is_compact_layout();
+
     const int win_height = message_content_height_;
-    const int win_width = COLS / 3;
+    const int win_width = compact
+        ? COLS - 2
+        : COLS / 3;
     const int content_start = dyn_content_start_row_;
+    const int start_col = compact 
+        ? 1 
+        : win_width * 2;
 
     WINDOW* entry_name = newwin(
         win_height, 
         win_width, 
         content_start, 
-        win_width * 2
+        start_col
     );
     WINDOW* entry_username = newwin(
         win_height, 
         win_width, 
         content_start + win_height, 
-        win_width * 2
+        start_col
     );
     WINDOW* entry_secret = newwin(
         win_height, 
         win_width, 
         content_start + win_height * 2, 
-        win_width * 2
+        start_col
     );
     WINDOW* menu = newwin(
         win_height + 1,
         win_width, 
         content_start + win_height * 3, 
-        win_width * 2
+        start_col
     );
     if (!entry_name 
         || !entry_username 
@@ -402,7 +430,7 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     wattroff(entry_secret, A_BOLD);
 
     keypad(menu, true);
-    std::vector<std::string> options = { "REVEAL ENTRY", "COPY PASSWORD TO CLIPBOARD", "BACK" };
+    std::vector<std::string> options = { "REVEAL ENTRY", compact ? "COPY" :  "COPY PASSWORD TO CLIPBOARD", "BACK" };
     int selected = options.size() - 1;
 
     auto render = [&]()
@@ -556,16 +584,18 @@ void TerminalUI::display_entry(const vault::Entry& entry)
     delwin(menu);
 }
 
-bool check_remove_entry(int dyn_content_start_row_, int message_content_height_) 
+bool TerminalUI::check_remove_entry(int dyn_content_start_row_, int message_content_height_) 
 {
-  const int win_width = COLS / 3;
+  const bool compact = is_compact_layout();
+  const int win_width = compact ? COLS : COLS / 3;
   const int content_start = dyn_content_start_row_;
+  const int start_col = compact ? 1 : win_width * 2;
   
   WINDOW* menu = newwin(
       4,
       win_width,
       content_start,
-      win_width * 2 
+      start_col
   );
 
   keypad(menu, true);
@@ -646,15 +676,17 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
 {
     if (entries.empty()) return 'l';
 
+    const bool compact = is_compact_layout();
     const int num_entries = static_cast<int>(entries.size()) + 1;
     const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
-    const int viewport_left = COLS / 3;
+    const int viewport_left = compact ? 1 : COLS / 3;
     const int viewport_bottom = LINES - 1;
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
+    const int win_width = compact ? COLS : COLS / 3;
 
-    WINDOW* pad = newpad(num_entries + 2, COLS / 3);
+    WINDOW* pad = newpad(num_entries + 2, win_width);
     if (!pad) return 'l';
 
     keypad(pad, TRUE); 
@@ -678,7 +710,7 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
                 {
                     wattron(pad, A_REVERSE); 
                     
-                    mvwhline(pad, 1 + i, 1, ' ', COLS/3 - 2);
+                    mvwhline(pad, 1 + i, 1, ' ', compact ? COLS - 2 : COLS/3 - 2);
                     mvwprintw(pad, 1 + i, 2, "%s", entries[i].name.c_str());
                     
                     wattroff(pad, A_REVERSE);
@@ -695,7 +727,7 @@ util::Expected<size_t, char> TerminalUI::remove_entry(const std::vector<vault::E
                     wattron(pad, A_REVERSE);
                 }
 
-                mvwhline(pad, 1 + i, 1, ' ', COLS/3 - 2);
+                mvwhline(pad, 1 + i, 1, ' ', compact ? COLS - 2 : COLS/3 - 2);
                 mvwprintw(pad, 1 + i, COLS/6 - 2, "BACK");
 
                 if (i == selected)
@@ -824,13 +856,14 @@ std::vector<std::string> TerminalUI::wrap_text(const std::string& text, int widt
 
 void TerminalUI::display_help_topic(const app::HelpTopic& topic)
 {
+    const bool compact = is_compact_layout();
     const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
-    const int viewport_left = COLS / 3 * 2;
+    const int viewport_left = compact ? 1 : COLS / 3 * 2;
     const int viewport_bottom = LINES - 1;
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
-    const int win_width = COLS / 3;
+    const int win_width = compact ? COLS : COLS / 3;
 
     const int text_width = win_width - 4; 
     std::vector<std::string> lines = wrap_text(topic.description, text_width);
@@ -895,13 +928,14 @@ void TerminalUI::display_help_topic(const app::HelpTopic& topic)
 
 void TerminalUI::display_FAQ_topic(const app::FAQTopic& topic) 
 {
+    const bool compact = is_compact_layout();
     const int content_start = dyn_content_start_row_;
     const int viewport_top = content_start;
-    const int viewport_left = COLS / 3 * 2;
+    const int viewport_left = compact ? 1: COLS / 3 * 2;
     const int viewport_bottom = LINES - 1;
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
-    const int win_width = COLS / 3;
+    const int win_width = compact ? COLS : COLS / 3;
 
     const int text_width = win_width - 4; 
     std::vector<std::string> lines = wrap_text(topic.description, text_width);
@@ -996,11 +1030,15 @@ void TerminalUI::list_FAQ_menu()
 
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_password ()
 {
+    const bool compact = is_compact_layout();
     const int win_height = message_content_height_;
-    const int win_width = COLS / 3;
+    const int win_width = compact 
+        ? COLS - 2 
+        : COLS / 3;
     const int content_start  = dyn_content_start_row_;
+    const int start_col = compact ? 1 : win_width;
 
-    WINDOW* password_input_win = newwin(win_height, win_width, content_start, win_width);
+    WINDOW* password_input_win = newwin(win_height, win_width, content_start, start_col);
     if (!password_input_win)
     {
         return std::string("");
@@ -1049,11 +1087,13 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_master_passwo
 
 util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::string prompt)
 {
+    const bool compact = is_compact_layout();
     const int win_height = message_content_height_;
-    const int win_width = COLS / 3;
+    const int win_width = compact ? COLS - 2 : COLS / 3;
     const int content_start  = dyn_content_start_row_;
+    const int start_col = compact ? 1 : win_width;
 
-    WINDOW* prompt_input_win = newwin(win_height, win_width, content_start, win_width);
+    WINDOW* prompt_input_win = newwin(win_height, win_width, content_start, start_col);
     if (!prompt_input_win)
     {
         return std::string("");
@@ -1101,12 +1141,14 @@ util::Expected<util::SecureString, std::string> TerminalUI::prompt_input (std::s
 
 bool TerminalUI::generate_password()
 {
+    const bool compact = is_compact_layout();
     const int win_height = message_content_height_;
-    const int win_width = COLS / 3;
+    const int win_width = compact ? COLS : COLS / 3;
     const int content_start  = dyn_content_start_row_;
+    const int start_col = compact ? 1 : win_width;
     
-    WINDOW* question = newwin(2, win_width, content_start, win_width);
-    WINDOW* menu = newwin(2, win_width, content_start + 2, win_width);
+    WINDOW* question = newwin(2, win_width, content_start, start_col);
+    WINDOW* menu = newwin(2, win_width, content_start + 2, start_col);
     if (!question || !menu)
     {
       return true;
@@ -1131,7 +1173,7 @@ bool TerminalUI::generate_password()
                     static_cast<int>(i),
                     1,
                     ' ',
-                    win_width - 2
+                    start_col - 2
                 );
 
                 mvwprintw(
@@ -1204,15 +1246,17 @@ void TerminalUI::run_pad_menu(const std::string& title, const std::vector<std::s
 {
     if (labels.empty()) return;
 
+    const bool compact = is_compact_layout();
     const int num_rows = static_cast<int>(labels.size()) + 1;
     const int content_start = dyn_content_start_row_;
+    const int win_width = compact ? COLS : COLS / 3;
     const int viewport_top = content_start;
-    const int viewport_left = COLS / 3;
+    const int viewport_left = compact ? 0 : COLS / 3;
     const int viewport_bottom = LINES - 1;
     const int viewport_right = COLS - 1;
     const int viewport_height = viewport_bottom - viewport_top + 1;
 
-    WINDOW* pad = newpad(num_rows + 2, viewport_left);
+    WINDOW* pad = newpad(num_rows + 2, win_width);
     if (!pad) return;
     keypad(pad, TRUE);
 
@@ -1227,12 +1271,12 @@ void TerminalUI::run_pad_menu(const std::string& title, const std::vector<std::s
         {
             const bool is_back = (i == static_cast<int>(labels.size()));
             const std::string text = is_back ? "BACK" : labels[i];
-	    const int text_col = (i == selected) ? 2 : 1;
+	          const int text_col = (i == selected) ? 2 : 1;
 
             if (i == selected) wattron(pad, A_REVERSE);
-            mvwhline(pad, i + 1, 1, ' ', viewport_left - 2);
+            mvwhline(pad, i + 1, 1, ' ', win_width - 2);
             if (is_back)
-                mvwprintw(pad, i + 1, COLS / 6 - 2, "%s", text.c_str());
+                mvwprintw(pad, i + 1, compact ? 1 : COLS / 6 - 2, "%s", text.c_str());
             else
                 mvwprintw(pad, i + 1, text_col, "%s", text.c_str());
             if (i == selected) wattroff(pad, A_REVERSE);
@@ -1294,6 +1338,25 @@ void TerminalUI::shutdown()
         keypad(stdscr, FALSE);
 
         endwin(); 
+    }
+}
+
+bool TerminalUI::is_compact_layout() const
+{
+    return COLS < 100 || LINES < 35;
+}
+
+void TerminalUI::update_layout()
+{
+    getmaxyx(stdscr, LINES, COLS);
+
+    if (is_compact_layout()) 
+    {
+        message_content_height_ = 3;
+    } 
+    else 
+    {
+        message_content_height_ = 3;
     }
 }
 

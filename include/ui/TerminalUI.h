@@ -53,12 +53,16 @@ public:
     util::Expected<util::SecureString, std::string> prompt_input(std::string prompt);
     bool generate_password();
     void display_entry(const vault::Entry& entry);
+    bool check_remove_entry(int dyn_content_start_row_, int message_content_height_);
     util::Expected<size_t, char> remove_entry (const std::vector<vault::Entry>& entries);
     void list_help_menu();
     void list_FAQ_menu();
 
 private:
     void shutdown();
+    bool is_compact_layout() const;
+    void update_layout();
+
     int m_content_start_row_ = 0;
     int dyn_content_start_row_ = 0;
     int message_content_height_ = 3;
